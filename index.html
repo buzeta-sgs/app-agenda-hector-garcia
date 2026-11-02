@@ -1,0 +1,1578 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda Páez</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="logo/icono-32.png">
+<link rel="icon" type="image/svg+xml" href="logo/icono.svg">
+<link rel="apple-touch-icon" href="logo/icono-180.png">
+<meta name="theme-color" content="#4176AE">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Agenda Páez">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="config.js?v=10"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+<style>
+:root{--azul:#3F7FC1;--azul2:#6FA0D6;--azul3:#2B5A8C;--celeste:#E1EDFA;--celeste2:#F2F7FC;--naranja:#F47A20;--naranja2:#DD6A12;--texto:#16202E;--gris:#5F6B7A;--gris2:#8A94A3;--borde:#E4E9F0;--fondo:#F6F8FB;--ok:#127A3E;--okbg:#E7F5EC;--warn:#8A4A12;--warnbg:#FFF3E8;--err:#B42318;--sombra:0 1px 2px rgba(16,32,56,.05),0 2px 8px rgba(16,32,56,.04)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;-webkit-font-smoothing:antialiased}
+.layout{display:flex;min-height:100vh}
+.side{width:236px;flex-shrink:0;background:#fff;border-right:1px solid var(--borde);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:20px 18px 18px;border-bottom:1px solid var(--borde);display:flex;gap:10px;align-items:center}
+.logo{width:38px;height:38px;border-radius:10px;background:var(--celeste);color:var(--azul);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:inset 0 -3px 0 var(--naranja)}
+.brand .t{font-weight:700;color:var(--azul3);font-size:15px;letter-spacing:-.01em}
+.brand .s{font-size:11.5px;color:var(--gris)}
+.nav{padding:12px 10px;display:flex;flex-direction:column;gap:2px;flex:1}
+.nav .lbl{font-size:10.5px;font-weight:600;color:var(--gris2);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px 6px}
+.nav button{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:var(--gris);font-weight:500;font-size:14px}
+.nav button i{font-size:18px}
+.nav button:hover{background:var(--celeste2);color:var(--azul)}
+.nav button.on{background:var(--celeste);color:var(--azul3);font-weight:600;box-shadow:inset 3px 0 0 var(--naranja)}
+.side-foot{padding:14px 16px;border-top:1px solid var(--borde);display:flex;flex-direction:column;gap:10px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--gris);cursor:pointer}
+.switch input{appearance:none;width:34px;height:20px;border-radius:20px;background:#CBD3DE;position:relative;cursor:pointer;transition:.2s;margin:0;flex-shrink:0;padding:0;border:0}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch input:checked{background:var(--naranja)}.switch input:checked::after{left:16px}
+.content{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--borde);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:5}
+.topbar h1{margin:0;font-size:19px;font-weight:700;letter-spacing:-.02em;color:var(--texto)}
+.topbar .fecha{font-size:12.5px;color:var(--gris);margin-top:2px}
+.topbar .fecha::first-letter{text-transform:uppercase}
+.badge{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--celeste2);color:var(--azul);border:1px solid var(--celeste);white-space:nowrap}
+.badge.warn{background:var(--warnbg);color:var(--warn);border-color:#FBD9BC}
+main{padding:24px 28px 40px;max-width:1080px;width:100%}
+button,.btn{font:inherit;font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:8px;border:1px solid var(--borde);background:#fff;color:var(--texto);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s,border-color .15s}
+button:hover{border-color:#C9D3E0;background:var(--celeste2)}
+button i{font-size:16px}
+button.pri{background:var(--naranja);border-color:var(--naranja);color:#fff;font-weight:600;box-shadow:0 1px 2px rgba(221,106,18,.3)}
+button.pri:hover{background:var(--naranja2);border-color:var(--naranja2)}
+button.mini{padding:5px 10px;font-size:12.5px}
+button.del{color:var(--err)}button.del:hover{background:#FEF1F0;border-color:#F5C6C1}
+input,select,textarea{font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--borde);border-radius:8px;width:100%;background:#fff;color:var(--texto);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--azul2);box-shadow:0 0 0 3px rgba(111,160,214,.2)}
+textarea{min-height:96px;resize:vertical;line-height:1.5}
+label.f{display:block;font-size:12px;font-weight:500;color:var(--gris);margin-bottom:5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:18px 20px;margin-bottom:16px;box-shadow:var(--sombra)}
+.card h3{margin:0 0 14px;font-size:15px;font-weight:600;color:var(--texto);letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.card h3 i{color:var(--azul2)}
+.mt{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:16px 18px;box-shadow:var(--sombra);display:flex;gap:14px;align-items:flex-start}
+.mt .ic{width:40px;height:40px;border-radius:10px;background:var(--celeste);color:var(--azul);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.mt .l{font-size:12.5px;color:var(--gris);font-weight:500}.mt .v{font-size:24px;font-weight:700;color:var(--texto);letter-spacing:-.02em;line-height:1.25}
+.mt.n .ic{background:var(--warnbg);color:var(--naranja2)}
+/* Recaudación: cabecera con la meta del mes y donaciones con color por forma de pago */
+.hero{background:linear-gradient(135deg,var(--azul3) 0%,var(--azul) 65%,#2E86C1 100%);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:16px;box-shadow:0 6px 20px rgba(15,61,110,.22);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07)}
+.hero .et{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.hero .monto{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.hero .de{font-size:13.5px;opacity:.85}
+.hero .prog{height:12px;background:rgba(255,255,255,.18);border-radius:10px;overflow:hidden;margin:16px 0 8px}
+.hero .prog div{height:100%;border-radius:10px;background:linear-gradient(90deg,#F9A25B,var(--naranja))}
+.hero .pie{display:flex;justify-content:space-between;font-size:12.5px;opacity:.9;gap:10px;flex-wrap:wrap}
+.hero .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.18);position:relative;z-index:1}
+.hero .stats .l{font-size:11.5px;opacity:.75}.hero .stats .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.metodos{display:flex;flex-direction:column;gap:10px}
+.metodo{display:grid;grid-template-columns:130px minmax(0,1fr) 90px;gap:10px;align-items:center;font-size:13px}
+.metodo .b{height:10px;background:#EDF1F6;border-radius:6px;overflow:hidden}.metodo .b div{height:100%;border-radius:6px;background:var(--c)}
+.metodo .m{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.don-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:color-mix(in srgb,var(--c) 13%,#fff);color:var(--c)}
+.don-monto{font-weight:700;color:var(--ok);font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn-salir{color:#C62828;border-color:#F3C9C9}
+.btn-salir:hover{background:#FDECEC}
+.ev-fila{align-items:flex-start}
+.ev-avisos{margin-top:8px;gap:6px}
+.ev-hist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tipos-aviso{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tipos-aviso button.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.dest-lista{max-height:260px;overflow:auto;border:1px solid var(--borde,#dde5ee);border-radius:10px;margin-top:8px}
+.dest-lista label{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--borde,#eef2f6);cursor:pointer;font-size:14px}
+.dest-lista label:last-child{border-bottom:0}
+.dest-lista input{width:auto}
+/* Organigrama: árbol con líneas (también se usa en el PDF, ver ORG_CSS) */
+.org-marco{overflow:auto;padding:6px 0 10px}
+.org-acc{display:flex;gap:4px;justify-content:center;margin-top:8px}
+.org-acc button{padding:3px 7px;font-size:12px}
+.aliados-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.aliado{border:1px solid var(--borde,#dde5ee);border-left:4px solid #E2650F;border-radius:10px;padding:12px 14px;background:#fff}
+.aliado .sub{margin-top:2px}
+.eq-mail{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 2px;font-size:14px;color:var(--azul3);word-break:break-all}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c)}
+@media (max-width:560px){.hero .monto{font-size:30px}.hero .stats .v{font-size:16px}.metodo{grid-template-columns:96px minmax(0,1fr) 72px}}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--borde)}
+.row:last-child{border-bottom:0}
+.row b{font-weight:600}
+.sub{font-size:12.5px;color:var(--gris);margin-top:1px}
+.pill{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;border:0;cursor:pointer}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.no{background:var(--warnbg);color:var(--warn)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.aviso{background:var(--warnbg);color:var(--warn);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;border:1px solid #FBD9BC;display:flex;gap:8px;align-items:center}
+.prev{background:var(--celeste2);border:1px solid var(--celeste);border-radius:10px;padding:14px 16px;white-space:pre-wrap;font-size:14px;line-height:1.55}
+.bar{height:8px;background:#EDF1F6;border-radius:8px;overflow:hidden}.bar div{height:100%;background:var(--naranja);border-radius:8px}
+.err{color:var(--err);font-size:13px;margin:8px 0 0}
+.okm{color:var(--ok);font-size:13px;margin:8px 0 0}
+.hide{display:none}
+.login{max-width:380px;margin:12vh auto 0}
+.vacio{color:var(--gris);font-size:13.5px;padding:18px 0;text-align:center}
+.cal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.cal2{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--borde);border:1px solid var(--borde);border-radius:10px;overflow:hidden}
+.cal2 .dn{background:#F8FAFC;font-size:11px;font-weight:600;color:var(--gris);text-align:center;padding:9px 0;text-transform:uppercase;letter-spacing:.05em}
+.cal2 .dia{all:unset;box-sizing:border-box;background:#fff;min-height:100px;padding:6px;display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0;transition:background .12s}
+.cal2 .dia:hover{background:var(--celeste2)}
+.cal2 .dia.finde{background:#FAFBFD}
+.cal2 .dia.fuera .num{color:#B8C0CC}
+.cal2 .dia.fuera .chip{opacity:.55}
+.cal2 .num{font-size:12.5px;font-weight:600;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
+.cal2 .dia.hoy .num{background:var(--naranja);color:#fff}
+.cal2 .dia.sel{box-shadow:inset 0 0 0 2px var(--azul);background:var(--celeste2)}
+.cal2 .chip{display:block;font-size:11.5px;line-height:1.35;padding:3px 6px;border-radius:5px;background:color-mix(in srgb,var(--c) 12%,#fff);border-left:3px solid var(--c);color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal2 .chip b{font-weight:600;color:var(--c)}
+.cal2 .mas{font-size:11px;font-weight:500;color:var(--gris);padding-left:4px}
+.cal2 .pts{display:none;gap:3px}.cal2 .pts i{width:6px;height:6px;border-radius:50%;display:block}
+.leyenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--gris)}
+.dia-panel{margin-top:16px;padding-top:14px;border-top:1px solid var(--borde)}
+.hora{min-width:64px;text-align:center;font-size:12.5px;font-weight:600;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c)}
+.mob-brand{display:none;align-items:center;gap:10px}
+.modsel{display:flex;gap:4px;margin:12px 10px 0;padding:4px;background:var(--fondo);border:1px solid var(--borde);border-radius:10px}
+.modsel button{all:unset;cursor:pointer;flex:1;text-align:center;padding:7px 6px;border-radius:7px;font-size:13px;font-weight:600;color:var(--gris);display:flex;align-items:center;justify-content:center;gap:6px}
+.modsel button.on{background:#fff;color:var(--azul3);box-shadow:0 1px 3px rgba(16,32,56,.12)}
+.modsel.mini{margin:0}.modsel.mini button{padding:6px 10px;font-size:12px}
+.tabla{width:100%;border-collapse:collapse;font-size:13.5px}
+.tabla th{text-align:left;font-size:11.5px;font-weight:600;color:var(--gris);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--borde);white-space:nowrap}
+.tabla td{padding:10px;border-bottom:1px solid var(--borde);vertical-align:middle}
+.tabla tr:last-child td{border-bottom:0}
+.tabla .num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+.est{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.est.pendiente{background:#EEF1F5;color:var(--gris)}.est.cargada{background:var(--celeste);color:var(--azul)}
+.est.verificada{background:var(--okbg);color:var(--ok)}.est.incidencia{background:#FDECEA;color:var(--err)}
+.cand{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--borde)}
+.cand:last-child{border-bottom:0}
+.cand .barra{grid-column:1/-1;height:12px;background:#EDF1F6;border-radius:8px;overflow:hidden}
+.cand .barra div{height:100%;border-radius:8px}
+/* Marcador de resultados: los dos primeros arriba, barra repartida y el resto abajo */
+.duelo{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.duelo .lado{display:flex;align-items:center;gap:12px;min-width:0}
+.duelo .lado.der{flex-direction:row-reverse;text-align:right}
+.duelo .nom{font-size:16px;font-weight:700;color:var(--texto);line-height:1.15}
+.duelo .pc{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
+.duelo .vt{font-size:12.5px;color:var(--gris);font-variant-numeric:tabular-nums}
+.reparto{position:relative;display:flex;height:16px;border-radius:4px;overflow:hidden;background:#EDF1F6;margin:14px 0 4px}
+.reparto div{height:100%;border-right:1px solid #fff}
+.reparto div:last-child{border-right:0}
+.reparto::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--texto);opacity:.55}
+.mitad{text-align:center;font-size:10px;color:var(--gris2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.resto{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px 8px;border-top:1px solid var(--borde);padding-top:14px}
+.resto .it{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}
+.resto .n{font-size:12px;color:var(--gris);line-height:1.2;margin-top:4px}
+.resto .p{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.resto .v{font-size:11px;color:var(--gris2);font-variant-numeric:tabular-nums}
+@media (max-width:560px){
+  .duelo .lado,.duelo .lado.der{flex-direction:column;gap:6px;align-items:flex-start}
+  .duelo .lado.der{align-items:flex-end}
+  .duelo .pc{font-size:28px}.duelo .nom{font-size:14px}
+}
+.big{font-size:22px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+@media (max-width:860px){
+  .layout{flex-direction:column}
+  .side{position:fixed;bottom:0;top:auto;left:0;right:0;width:auto;height:auto;flex-direction:row;border-right:0;border-top:1px solid var(--borde);z-index:10;box-shadow:0 -2px 10px rgba(16,32,56,.06)}
+  .brand,.side-foot,.nav .lbl{display:none}
+  .nav{flex-direction:row;padding:6px 4px;justify-content:space-around;gap:0}
+  .nav button{flex-direction:column;gap:2px;font-size:10.5px;padding:6px 2px;flex:1;justify-content:center;text-align:center}
+  .nav button.on{box-shadow:inset 0 3px 0 var(--naranja)}
+  .topbar{padding:12px 16px}.topbar h1{font-size:17px}
+  .topbar .desk{display:none}
+  .mob-brand{display:flex}
+  .side .modsel{display:none}
+  .topbar{flex-wrap:wrap}
+  main{padding:16px 16px 90px}
+  .row{flex-wrap:wrap}
+  .cal2 .dia{min-height:52px;padding:4px;align-items:center}
+  .cal2 .chip,.cal2 .mas{display:none}
+  .cal2 .pts{display:flex}
+}
+
+/* ---------- Tema de color: menú azul oscuro, fondo con tono y acentos por tarjeta ---------- */
+body{background:linear-gradient(180deg,#E3ECF6 0,#EEF3F9 320px,#F1F5FA 100%) fixed}
+.side{background:linear-gradient(180deg,#4176AE 0%,#2F5D8F 100%);border-right:0;box-shadow:2px 0 14px rgba(47,93,143,.18)}
+.brand{border-bottom-color:rgba(255,255,255,.1)}
+.brand .t{color:#fff}.brand .s{color:rgba(255,255,255,.62)}
+.logo{background:rgba(255,255,255,.12);color:#fff}
+.nav .lbl{color:rgba(255,255,255,.42)}
+.nav button{color:rgba(255,255,255,.74)}
+.nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav button.on{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 3px 0 0 var(--naranja)}
+.nav button.on i{color:#FDBA74}
+.side-foot{border-top-color:rgba(255,255,255,.1)}
+.side .switch{color:rgba(255,255,255,.74)}
+.side .switch input{background:rgba(255,255,255,.25)}.side .switch input:checked{background:var(--naranja)}
+.side-foot button{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:#fff}
+.side-foot button:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.25)}
+.side .modsel{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
+.side .modsel button{color:rgba(255,255,255,.7)}
+.side .modsel button.on{background:#fff;color:var(--azul3)}
+.topbar{background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-bottom:1px solid #D9E3EF}
+.topbar h1{color:var(--azul3)}
+.card{border-color:#DCE5F0;border-top:3px solid var(--azul2)}
+.card h3 i{width:28px;height:28px;border-radius:8px;background:var(--celeste);color:var(--azul);display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+.mt{--c:var(--azul);border-color:#DCE5F0;border-left:4px solid var(--c)}
+.grid>.mt:nth-child(4n+2){--c:#127A3E}.grid>.mt:nth-child(4n+3){--c:#7C3AED}.grid>.mt:nth-child(4n+4){--c:#0E7490}
+.grid>.mt.n{--c:var(--naranja)}
+.mt .ic,.mt.n .ic{background:color-mix(in srgb,var(--c) 13%,#fff);color:var(--c)}
+.tabla th{background:#F1F6FB}
+.tabla tr:hover td{background:#F8FBFE}
+.cal2 .dn{background:#EAF2FB;color:var(--azul3)}
+input,select,textarea{background:#FBFCFE;border-color:#D8E1EC}
+
+/* Usuario de solo Agenda: sin botones que lleven a Enviar */
+.solo-agenda [data-a="invitar"],.solo-agenda .ev-avisos{display:none}
+
+/* ---------- Pantalla de entrada ---------- */
+.acceso{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh;background:#fff}
+.acc-hero{position:relative;overflow:hidden;color:#fff;padding:56px 64px;display:flex;flex-direction:column;justify-content:center;
+  background:radial-gradient(circle at 85% 15%,rgba(244,122,32,.28),transparent 42%),linear-gradient(155deg,#5590CE 0%,#4176AE 48%,#2F5D8F 100%)}
+.acc-hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(180deg,#000,transparent 85%)}
+.acc-glow{position:absolute;width:520px;height:520px;border-radius:50%;right:-180px;bottom:-200px;border:70px solid rgba(255,255,255,.04)}
+.acc-hero>*:not(.acc-glow){position:relative}
+.acc-logo{width:96px;height:96px;border-radius:24px;box-shadow:0 18px 40px rgba(0,0,0,.3);margin-bottom:28px}
+.acc-hero h1{font-size:46px;line-height:1.05;margin:0;font-weight:700;letter-spacing:-.03em}
+.acc-raya{width:64px;height:5px;border-radius:3px;background:var(--naranja);margin:16px 0 12px}
+.acc-sub{margin:0;font-size:17px;color:rgba(255,255,255,.75)}
+.acc-lema{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;margin-top:28px;padding:12px 20px;border-radius:14px;font-size:22px;font-weight:700;letter-spacing:-.01em;color:#fff;
+  background:linear-gradient(135deg,#F68B3A,#E2650F);box-shadow:0 12px 30px rgba(226,101,15,.35)}
+.acc-lema i{font-size:24px}
+.acc-lista{list-style:none;padding:0;margin:34px 0 0;display:grid;gap:14px;max-width:440px}
+.acc-lista li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(4px)}
+.acc-lista i{width:38px;height:38px;flex-shrink:0;border-radius:10px;background:rgba(244,122,32,.18);color:#FDBA74;display:flex;align-items:center;justify-content:center;font-size:20px}
+.acc-lista span{font-size:13px;color:rgba(255,255,255,.68);line-height:1.4}
+.acc-lista b{display:block;color:#fff;font-size:14.5px;font-weight:600;margin-bottom:2px}
+.acc-form{display:flex;align-items:center;justify-content:center;padding:40px 24px;background:linear-gradient(180deg,#F4F8FC,#fff)}
+.acc-caja{width:100%;max-width:380px}
+.acc-logo-mob,.acc-lema-mob{display:none}
+.acc-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--azul);background:var(--celeste);padding:6px 11px;border-radius:999px}
+.acc-caja h2{font-size:32px;margin:18px 0 6px;letter-spacing:-.02em;color:var(--azul3)}
+.acc-ayuda{margin:0 0 26px;color:var(--gris);font-size:14.5px}
+.acc-caja label.f{font-size:12.5px;font-weight:600;color:var(--azul3);margin-top:14px}
+.acc-campo{position:relative}
+.acc-campo>i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gris2);font-size:19px;pointer-events:none}
+.acc-campo input{height:50px;padding-left:44px;padding-right:46px;font-size:15px;border-radius:12px;border:1.5px solid #D8E1EC;background:#fff}
+.acc-campo input:focus{border-color:var(--azul2);box-shadow:0 0 0 4px rgba(111,160,214,.2)}
+.acc-campo:focus-within>i{color:var(--azul)}
+.acc-ojo{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--gris2);font-size:19px;padding:8px;cursor:pointer;box-shadow:none}
+.acc-ojo:hover{color:var(--azul);background:none}
+.acc-err{display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px 12px;border-radius:10px;background:#FEF0EE;color:var(--err);font-size:13.5px;font-weight:500}
+.acc-btn{width:100%;height:52px;margin-top:22px;font-size:16px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,#F68B3A,#E2650F);border:0;box-shadow:0 10px 24px rgba(226,101,15,.32);transition:transform .12s,box-shadow .12s}
+.acc-btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(226,101,15,.38);background:linear-gradient(135deg,#F47A20,#D45C0A)}
+.acc-btn:disabled{opacity:.8;transform:none;cursor:wait}
+.acc-gira{animation:acc-gira 1s linear infinite}
+@keyframes acc-gira{to{transform:rotate(360deg)}}
+.acc-pie{margin:18px 0 0;text-align:center;font-size:12.5px;color:var(--gris2)}
+@media (max-width:860px){
+  .acceso{grid-template-columns:1fr;background:linear-gradient(165deg,#5590CE 0%,#4176AE 55%,#2F5D8F 100%)}
+  .acc-hero{display:none}
+  .acc-form{background:none;padding:28px 16px;min-height:100vh}
+  .acc-caja{background:#fff;border-radius:20px;padding:28px 22px;box-shadow:0 24px 60px rgba(0,0,0,.35);text-align:left}
+  .acc-logo-mob{display:block;width:72px;height:72px;border-radius:18px;margin:-64px auto 16px;box-shadow:0 12px 28px rgba(0,0,0,.3);border:4px solid #fff}
+  .acc-caja{margin-top:40px}
+  .acc-lema-mob{display:block;text-align:center;font-size:19px;font-weight:700;color:var(--naranja2);margin:0 0 16px}
+  .acc-caja h2{font-size:27px}
+}
+
+@media (max-width:860px){
+  .side{box-shadow:0 -4px 14px rgba(47,93,143,.25);border-top:0}
+  .nav button.on{background:rgba(255,255,255,.12);box-shadow:inset 0 3px 0 var(--naranja)}
+  .mob-brand{width:100%}.mob-brand .modsel{width:100%}
+  .topbar .fecha{white-space:nowrap}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const CFG = window.APP_CONFIG;
+const DEMO = !CFG.SUPABASE_URL;
+const sb = DEMO ? null : supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+const TABLAS = ['contactos', 'eventos', 'envios', 'donaciones', 'equipo', 'organigrama', 'aliados'];
+const TABLAS_ADMIN = ['donaciones', 'equipo', 'organigrama', 'aliados', 'e_candidatos', 'e_centros', 'e_mesas', 'e_testigos'];
+// Usuarios sin correo: "maria" entra como maria@<DOMINIO_USUARIOS>
+const correoDe = u => (u = u.trim().toLowerCase()).includes('@') ? u : `${u}@${CFG.DOMINIO_USUARIOS}`;
+
+// ---------- Datos (Supabase o navegador en modo prueba) ----------
+const local = {
+  get(t) { try { return JSON.parse(localStorage.getItem('cp_' + t) || '[]'); } catch { return []; } },
+  set(t, a) { try { localStorage.setItem('cp_' + t, JSON.stringify(a)); } catch {} }
+};
+const db = {
+  async list(t) {
+    if (DEMO) return local.get(t);
+    const { data, error } = await sb.from(t).select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+  async insert(t, rows) {
+    rows = Array.isArray(rows) ? rows : [rows];
+    if (DEMO) {
+      const nuevos = rows.map(r => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...r }));
+      local.set(t, [...nuevos, ...local.get(t)]);
+      return nuevos;
+    }
+    const { data, error } = await sb.from(t).insert(rows).select();
+    if (error) throw error;
+    return data;
+  },
+  async update(t, id, patch) {
+    if (DEMO) { local.set(t, local.get(t).map(r => r.id === id ? { ...r, ...patch } : r)); return; }
+    const { error } = await sb.from(t).update(patch).eq('id', id);
+    if (error) throw error;
+  },
+  async remove(t, id) {
+    if (DEMO) { local.set(t, local.get(t).filter(r => r.id !== id)); return; }
+    const { error } = await sb.from(t).delete().eq('id', id);
+    if (error) throw error;
+  }
+};
+
+// ---------- Estado ----------
+const S = {
+  modulo: 'campana', tab: 'inicio', contactos: [], eventos: [], envios: [], donaciones: [], equipo: [], organigrama: [], aliados: [],
+  buscar: '', filtroSector: '', editContacto: null, editEquipo: null, editNodo: null, editAliado: null,
+  bienvenida: (() => { try { return JSON.parse(localStorage.getItem('cp_bienvenida')); } catch {} })() || {
+    asunto: '¡Bienvenido al equipo, {nombre}!',
+    texto: 'Hola {nombre}:\n\nTú mejor que nadie conoces lo que vive nuestra gente en el Municipio Páez. Por eso hoy te escribo con alegría: **desde ahora formas parte del equipo de Héctor García.**\n\nEste proyecto se construye en la calle, sector por sector, con gente comprometida como tú. **Tu trabajo es clave para que juntos lleguemos a cada familia de Páez.**\n\nGracias por sumarte. Cuento contigo, y tú cuentas conmigo.' },
+  mes: new Date().toLocaleDateString('en-CA').slice(0, 7), diaSel: null, admin: DEMO, gestor: DEMO, usuarios: [],
+  electoral: (() => { try { return localStorage.getItem('cp_electoral') === '1'; } catch { return false; } })(),
+  draft: { tipo: 'invitar', fecha: 'hoy', hora: '', lugar: '', sector: '', evento: '', horaAntes: '', lugarAntes: '', motivo: '', elegir: false, elegidos: [],
+    mensaje: 'Hola {nombre}, {fecha} estaremos en {lugar} a las {hora}. ¡Te esperamos!',
+    asunto: 'Te invitamos: {lugar}, {fecha}', revisado: false },
+  cola: null
+};
+
+const h = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = id => document.getElementById(id);
+const hoyISO = () => new Date().toLocaleDateString('en-CA');
+const fmt = n => Number(n || 0).toLocaleString('es-VE', { maximumFractionDigits: 2 });
+// "4:00 pm", "16:00" o "9am" -> minutos del día, para ordenar eventos
+function minutos(t) {
+  const m = String(t || '').toLowerCase().match(/(\d{1,2})(?::(\d{2}))?\s*(a|p)?/);
+  if (!m) return 9999;
+  let hh = Number(m[1]) % 12 + (m[3] === 'p' ? 12 : 0);
+  if (!m[3] && Number(m[1]) >= 12) hh = Number(m[1]);
+  return hh * 60 + Number(m[2] || 0);
+}
+const porFechaHora = (a, b) => (a.fecha || '').localeCompare(b.fecha || '') || minutos(a.hora) - minutos(b.hora);
+const fechaBonita = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('es-VE', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+const mismoMes = iso => iso && iso.slice(0, 7) === hoyISO().slice(0, 7);
+
+// Enlace para abrir el chat con el texto. En el computador va directo a WhatsApp Web:
+// el enlace wa.me pasa por una redirección que convierte los emojis en "�".
+const esTelefono = () => /Android|iPhone|iPad/i.test(navigator.userAgent);
+const urlWa = (tel, texto) => esTelefono()
+  ? `https://wa.me/${telWa(tel)}?text=${encodeURIComponent(texto)}`
+  : `https://web.whatsapp.com/send?phone=${telWa(tel)}&text=${encodeURIComponent(texto)}`;
+
+// Venezuela: 0414-1234567 -> 584141234567
+function telWa(t) {
+  let d = String(t || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('0')) d = '58' + d.slice(1);
+  else if (d.length === 10 && d.startsWith('4')) d = '58' + d;
+  return d;
+}
+
+function armar(texto, c) {
+  const d = S.draft;
+  const nombre = (c?.nombre || 'amigo').trim().split(/\s+/)[0];
+  return texto.replaceAll('{nombre}', nombre).replaceAll('{fecha}', d.fecha || '___')
+    .replaceAll('{hora}', d.hora || '___').replaceAll('{lugar}', d.lugar || '___')
+    .replaceAll('{motivo}', d.motivo ? ' por ' + d.motivo.trim() : '')
+    .replaceAll('{candidato}', CFG.CANDIDATO || '').trim();
+}
+
+// Tipos de aviso de una actividad. Cada uno trae su mensaje, asunto y la frase final del correo.
+const TIPOS_AVISO = {
+  invitar: { nombre: 'Invitación', icono: 'ti-send', frase: '¡Te esperamos!',
+    mensaje: 'Hola {nombre}, {fecha} estaremos en {lugar} a las {hora}. ¡Te esperamos!', asunto: 'Te invitamos: {lugar}, {fecha}' },
+  hoy: { nombre: '¡Es hoy!', icono: 'ti-alarm', frase: '¡Nos vemos hoy!',
+    mensaje: 'Hola {nombre}, ¡es hoy! Te esperamos a las {hora} en {lugar}. Ven con tu familia y tus vecinos.', asunto: '¡Es hoy! {lugar} a las {hora}' },
+  cambio: { nombre: 'Cambio', icono: 'ti-arrows-exchange', frase: '¡Te esperamos!',
+    mensaje: 'Hola {nombre}, la actividad de {fecha} cambia: ahora es a las {hora} en {lugar}. ¡Te esperamos!', asunto: 'Cambio: actividad de {fecha} a las {hora} en {lugar}' },
+  suspendido: { nombre: 'Suspendido', icono: 'ti-ban', frase: '¡Pronto nos vemos!',
+    mensaje: 'Hola {nombre}, suspendemos la actividad de {fecha} en {lugar}{motivo}. Te avisaremos la nueva fecha muy pronto. Gracias por tu comprensión.', asunto: 'Suspendida la actividad de {fecha} en {lugar}' },
+  gracias: { nombre: 'Gracias por venir', icono: 'ti-heart-handshake', frase: '¡Gracias por estar!',
+    mensaje: 'Hola {nombre}, ¡gracias por acompañarnos {fecha} en {lugar}! Tu presencia nos da fuerza para seguir trabajando por Páez. Seguimos juntos.', asunto: '¡Gracias por venir, {nombre}!' }
+};
+const diaISO = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
+
+function destinatarios(canal) {
+  const d = S.draft;
+  return S.contactos.filter(c => c.acepta && (d.elegir ? d.elegidos.includes(c.id) : !d.sector || c.sector === d.sector) &&
+    (canal === 'wa' ? telWa(c.telefono) : /\S+@\S+\.\S+/.test(c.correo || '')));
+}
+
+async function cargar() {
+  for (const t of TABLAS) if (S.admin || !TABLAS_ADMIN.includes(t)) S[t] = await db.list(t);
+  if (S.gestor) S.usuarios = (await apiUsuarios({ accion: 'listar' })).usuarios;
+}
+
+// Llama a una función de Supabase (supabase/functions/<nombre>) con la sesión actual.
+async function llamarFuncion(nombre, body) {
+  const { data: { session } } = await sb.auth.getSession();
+  let r;
+  try {
+    r = await fetch(`${CFG.SUPABASE_URL}/functions/v1/${nombre}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify(body)
+    });
+  } catch { throw new Error(`la función "${nombre}" de Supabase no respondió. Revisa en Supabase → Edge Functions → ${nombre} → Logs.`); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'el servidor respondió ' + r.status);
+  return j;
+}
+
+// Usuarios del panel: los administra solo CFG.GESTOR_USUARIOS, a través de supabase/functions/usuarios
+async function apiUsuarios(body) {
+  if (DEMO) {
+    let lista = local.get('usuarios');
+    if (body.accion === 'crear') {
+      if (lista.some(x => x.email === body.email)) throw new Error('Ese usuario ya existe.');
+      lista = [{ id: crypto.randomUUID(), email: body.email, created_at: new Date().toISOString() }, ...lista];
+    }
+    if (body.accion === 'borrar') lista = lista.filter(x => x.id !== body.id);
+    local.set('usuarios', lista);
+    return { usuarios: lista };
+  }
+  return llamarFuncion(CFG.FUNCIONES.usuarios, body);
+}
+const esAdminCorreo = e => CFG.ADMIN_EMAILS.map(x => x.toLowerCase()).includes(String(e || '').toLowerCase());
+const esSoloAgenda = e => (CFG.SOLO_AGENDA || []).map(x => x.toLowerCase()).includes(String(e || '').toLowerCase());
+const usuarioCorto = e => String(e || '').endsWith('@' + CFG.DOMINIO_USUARIOS) ? e.split('@')[0] : e;
+
+async function accion(fn) {
+  try { await fn(); } catch (e) { console.error(e); alert('No se pudo completar: ' + (e.message || e)); }
+}
+
+// ---------- Pantallas ----------
+// Dos módulos: Campaña (agenda, avisos, recaudación) y Elecciones (conteo de actas). elecciones.js agrega sus pantallas.
+const MODULOS = {
+  campana: { nombre: 'Campaña', icono: 'ti-calendar-event', grupos: [
+    ['Comunicación', [['inicio', 'ti-home', 'Inicio'], ['contactos', 'ti-users', 'Contactos'], ['agenda', 'ti-calendar', 'Agenda'], ['enviar', 'ti-send', 'Enviar'], ['historial', 'ti-history', 'Historial']]],
+    ['Gestión', [['equipo', 'ti-users-group', 'Equipo'], ['organigrama', 'ti-sitemap', 'Organigrama'],['recaudacion', 'ti-coin', 'Recaudación'], ['usuarios', 'ti-user-plus', 'Usuarios']]]
+  ] },
+  elecciones: { nombre: 'Elecciones', icono: 'ti-checkbox', grupos: [] }
+};
+const VIEWS = {};
+// Solo los administradores (CFG.ADMIN_EMAILS) ven Equipo, Recaudación y el módulo Elecciones. La base de datos lo exige también.
+// Usuarios solo lo ve CFG.GESTOR_USUARIOS; la función de Supabase lo exige también.
+const SOLO_ADMIN = ['equipo', 'organigrama', 'recaudacion'];
+const puedeVer = t => S.soloAgenda ? t === 'agenda' : t === 'usuarios' ? S.gestor : S.admin || !SOLO_ADMIN.includes(t);
+const gruposDe = m => MODULOS[m].grupos.map(([g, ts]) => [g, ts.filter(t => puedeVer(t[0]))]).filter(([, ts]) => ts.length);
+const tabsDe = m => gruposDe(m).flatMap(g => g[1]);
+const mt = (icono, label, valor, sub = '', cls = '') =>
+  `<div class="mt ${cls}"><div class="ic"><i class="ti ${icono}"></i></div><div><div class="l">${label}</div><div class="v">${valor}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
+
+function render() {
+  const boton = ([k, i, n]) => `<button class="${S.tab === k ? 'on' : ''}" data-a="tab" data-v="${k}"><i class="ti ${i}"></i><span>${n}</span></button>`;
+  if (!S.admin) S.modulo = 'campana';
+  const actual = tabsDe(S.modulo).find(t => t[0] === S.tab) || tabsDe(S.modulo)[0];
+  S.tab = actual[0];
+  const selector = !S.admin ? '' : Object.entries(MODULOS).map(([k, m]) => `<button class="${S.modulo === k ? 'on' : ''}" data-a="modulo" data-v="${k}"><i class="ti ${m.icono}"></i> ${m.nombre}</button>`).join('');
+  $('app').innerHTML = `
+  <div class="layout">
+    <aside class="side">
+      <div class="brand"><div class="logo"><i class="ti ti-calendar-event"></i></div><div><div class="t">${h(CFG.TITULO)}</div><div class="s">${h(CFG.SUBTITULO)}</div></div></div>
+      ${selector ? `<div class="modsel">${selector}</div>` : ''}
+      <div class="nav">
+        ${gruposDe(S.modulo).map(([g, ts]) => `<div class="lbl">${g}</div>${ts.map(boton).join('')}`).join('')}
+      </div>
+      <div class="side-foot">
+        ${S.modulo === 'campana' ? `<label class="switch">Período electoral <input type="checkbox" id="electoral" ${S.electoral ? 'checked' : ''}></label>` : ''}
+      </div>
+    </aside>
+    <div class="content">
+      <div class="topbar">
+        ${selector ? `<div class="mob-brand"><div class="modsel mini">${selector}</div></div>` : ''}
+        <div style="flex:1;min-width:0"><h1>${actual[2]}</h1><div class="fecha">${new Date().toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
+        <div class="acts" style="align-items:center">
+          ${S.electoral ? '<span class="badge warn">Período electoral</span>' : ''}
+          ${DEMO ? '<span class="badge">Modo prueba</span>' : ''}
+          <button class="mini btn-salir" data-a="salir" title="Salir de la app"><i class="ti ti-logout"></i> <span>Salir</span></button>
+        </div>
+      </div>
+      <main>
+        ${S.electoral && S.modulo === 'campana' ? '<div class="aviso"><i class="ti ti-alert-triangle"></i> Período electoral activo: revisa que cada mensaje cumpla las normas del CNE antes de enviarlo.</div>' : ''}
+        ${VIEWS[S.tab]()}
+      </main>
+    </div>
+  </div>`;
+  if (S.tab === 'enviar') actualizarPrevia();
+  if (S.tab === 'equipo') previaBienvenida();
+}
+const previaBienvenida = () => {
+  const m = S.equipo[0] || { nombre: 'María', apellido: 'Pérez', cargo: 'Coordinadora de Acarigua', funciones: 'Organizar las reuniones con vecinos\nLlevar la lista de voluntarios' };
+  if ($('q_previa')) $('q_previa').srcdoc = `<body style="margin:0">${correoBienvenidaHtml(m)}</body>`;
+};
+Object.assign(VIEWS, { inicio: () => vInicio(), contactos: () => vContactos(), agenda: () => vAgenda(), enviar: () => vEnviar(), historial: () => vHistorial(), equipo: () => vEquipo(), organigrama: () => vOrganigrama(), recaudacion: () => vRecaudacion(), usuarios: () => vUsuarios() });
+
+function vInicio() {
+  const conPermiso = S.contactos.filter(c => c.acepta).length;
+  const enviosMes = S.envios.filter(e => mismoMes(e.created_at?.slice(0, 10)));
+  const prox = S.eventos.filter(e => e.fecha >= hoyISO()).sort(porFechaHora).slice(0, 3);
+  const eventosSemana = S.eventos.filter(e => e.fecha >= hoyISO() && e.fecha <= new Date(Date.now() + 6 * 864e5).toLocaleDateString('en-CA')).length;
+  return `
+  <div class="grid" style="margin-bottom:14px">
+    ${mt('ti-users', 'Contactos', fmt(S.contactos.length), `${fmt(conPermiso)} aceptan mensajes`)}
+    ${mt('ti-send', 'Avisos este mes', fmt(enviosMes.length), `${fmt(enviosMes.reduce((a, e) => a + (e.cantidad || 0), 0))} mensajes`)}
+    ${mt('ti-calendar-event', 'Eventos próximos 7 días', fmt(eventosSemana), '', 'n')}
+  </div>
+  ${vCalendario()}
+  <div class="card"><h3>Próximos eventos</h3>
+    ${prox.length ? prox.map(e => `<div class="row"><div><b>${h(e.titulo)}</b><div class="sub">${fechaBonita(e.fecha)} · ${h(e.hora)} · ${h(e.lugar)}</div></div><button class="mini" data-a="invitar" data-v="${e.id}">Invitar</button></div>`).join('')
+      : '<div class="vacio">Agrega tu primer evento en Agenda.</div>'}
+  </div>
+  <button class="pri" data-a="tab" data-v="enviar"><i class="ti ti-speakerphone"></i> Aviso rápido</button>`;
+}
+
+const COLOR_SECTOR = ['#1E5FA3', '#F47A20', '#127A3E', '#8E44AD', '#C0392B', '#16A085'];
+const colorSector = s => COLOR_SECTOR[CFG.SECTORES.indexOf(s)] || '#5F6B7A';
+
+function vCalendario() {
+  const [y, m] = S.mes.split('-').map(Number);
+  const primero = new Date(y, m - 1, 1);
+  const blancos = (primero.getDay() + 6) % 7; // semana empieza en lunes
+  const semanas = Math.ceil((blancos + new Date(y, m, 0).getDate()) / 7);
+  const titulo = primero.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' });
+  const delMes = S.eventos.filter(e => e.fecha?.startsWith(S.mes)).length;
+  const celdas = [];
+  for (let i = 0; i < semanas * 7; i++) {
+    const d = new Date(y, m - 1, 1 - blancos + i), iso = d.toLocaleDateString('en-CA');
+    const evs = S.eventos.filter(e => e.fecha === iso).sort(porFechaHora);
+    const cls = [d.getMonth() !== m - 1 && 'fuera', iso === hoyISO() && 'hoy', iso === S.diaSel && 'sel', i % 7 > 4 && 'finde'].filter(Boolean).join(' ');
+    celdas.push(`<button class="dia ${cls}" data-a="dia" data-v="${iso}" aria-label="${fechaBonita(iso)}, ${evs.length} eventos">
+      <span class="num">${d.getDate()}</span>
+      ${evs.slice(0, 2).map(e => `<span class="chip" style="--c:${colorSector(e.sector)}">${e.hora ? `<b>${h(e.hora)}</b> ` : ''}${h(e.titulo)}</span>`).join('')}
+      ${evs.length > 2 ? `<span class="mas">+${evs.length - 2} más</span>` : ''}
+      ${evs.length ? `<span class="pts">${evs.slice(0, 3).map(e => `<i style="background:${colorSector(e.sector)}"></i>`).join('')}</span>` : ''}
+    </button>`);
+  }
+  const delDia = S.diaSel ? S.eventos.filter(e => e.fecha === S.diaSel).sort(porFechaHora) : [];
+  const diaLargo = S.diaSel ? new Date(S.diaSel + 'T12:00:00').toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  return `<div class="card">
+    <div class="cal-head">
+      <div><h3 style="margin:0;font-size:18px">${titulo.charAt(0).toUpperCase() + titulo.slice(1)}</h3><div class="sub">${delMes ? `${delMes} evento${delMes === 1 ? '' : 's'} este mes` : 'Sin eventos este mes'}</div></div>
+      <div class="acts" style="align-items:center">
+        <button class="mini" data-a="mesHoy">Hoy</button>
+        <button class="mini" data-a="mes" data-v="-1" aria-label="Mes anterior"><i class="ti ti-chevron-left"></i></button>
+        <button class="mini" data-a="mes" data-v="1" aria-label="Mes siguiente"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div class="cal2">${['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => `<div class="dn">${d}</div>`).join('')}${celdas.join('')}</div>
+    <div class="leyenda">${CFG.SECTORES.map(s => `<span><span class="dot" style="background:${colorSector(s)}"></span>${h(s)}</span>`).join('')}</div>
+    ${S.diaSel ? `<div class="dia-panel"><div class="acts" style="justify-content:space-between;align-items:center">
+        <b style="font-size:15px;color:var(--azul3)">${diaLargo.charAt(0).toUpperCase() + diaLargo.slice(1)}</b>
+        ${S.tab === 'agenda' ? '<button class="mini" data-a="irFormEvento"><i class="ti ti-plus"></i> Evento este día</button>' : ''}</div>
+      ${delDia.length ? delDia.map(e => `<div class="row"><div style="display:flex;gap:12px;align-items:center">
+          <div class="hora" style="--c:${colorSector(e.sector)}">${h(e.hora || '—')}</div>
+          <div><b>${h(e.titulo)}</b><div class="sub">${h(e.lugar)}${e.sector ? ' · ' + h(e.sector) : ''}</div></div></div>
+          <button class="mini" data-a="invitar" data-v="${e.id}"><i class="ti ti-send"></i> Invitar</button></div>`).join('')
+        : '<div class="vacio" style="padding:12px 0 4px">Sin eventos este día.</div>'}</div>` : ''}
+  </div>`;
+}
+
+function vContactos() {
+  const q = S.buscar.toLowerCase();
+  const lista = S.contactos.filter(c => (!S.filtroSector || c.sector === S.filtroSector) &&
+    (!q || (c.nombre + ' ' + c.telefono + ' ' + c.correo).toLowerCase().includes(q)))
+    .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+  const e = S.editContacto ? S.contactos.find(c => c.id === S.editContacto) || {} : {};
+  return `
+  <div class="card"><h3>${S.editContacto ? 'Editar contacto' : 'Nuevo contacto'}</h3>
+    <div class="grid">
+      <div><label class="f">Nombre</label><input id="c_nombre" value="${h(e.nombre)}" placeholder="María Pérez"></div>
+      <div><label class="f">Teléfono</label><input id="c_tel" value="${h(e.telefono)}" placeholder="0414-1234567"></div>
+      <div><label class="f">Correo</label><input id="c_correo" value="${h(e.correo)}" placeholder="maria@gmail.com"></div>
+      <div><label class="f">Sector</label><select id="c_sector">${CFG.SECTORES.map(s => `<option ${e.sector === s ? 'selected' : ''}>${h(s)}</option>`).join('')}</select></div>
+    </div>
+    <label class="sub" style="display:flex;gap:6px;align-items:center;margin:10px 0"><input type="checkbox" id="c_acepta" style="width:auto" ${e.acepta !== false ? 'checked' : ''}> Aceptó recibir mensajes</label>
+    <div class="acts"><button class="pri" data-a="guardarContacto">Guardar</button>${S.editContacto ? '<button data-a="cancelarContacto">Cancelar</button>' : ''}</div>
+    <p class="err" id="c_err"></p>
+  </div>
+  <div class="card">
+    <div class="acts" style="margin-bottom:10px">
+      <input id="buscar" placeholder="Buscar nombre, teléfono o correo" value="${h(S.buscar)}" style="flex:1;min-width:180px">
+      <select id="filtroSector" style="width:auto"><option value="">Todos los sectores</option>${CFG.SECTORES.map(s => `<option ${S.filtroSector === s ? 'selected' : ''}>${h(s)}</option>`).join('')}</select>
+    </div>
+    <div class="acts" style="margin-bottom:6px">
+      <button data-a="importar"><i class="ti ti-file-spreadsheet"></i> Importar Excel</button>
+      <button data-a="exportarContactos"><i class="ti ti-download"></i> Exportar</button>
+      <input type="file" id="archivo" accept=".xlsx,.xls,.csv" class="hide">
+    </div>
+    <p class="sub" style="margin:0 0 8px">El Excel debe tener columnas: nombre, telefono, correo, sector, acepta (sí/no). Mostrando ${fmt(lista.length)} de ${fmt(S.contactos.length)}.</p>
+    ${lista.length ? lista.map(c => `<div class="row"><div><b>${h(c.nombre)}</b><div class="sub">${h(c.sector)} · ${h(c.telefono) || 'sin teléfono'} · ${h(c.correo) || 'sin correo'}</div></div>
+      <div class="acts"><button class="pill ${c.acepta ? 'ok' : 'no'}" data-a="togglePermiso" data-v="${c.id}">${c.acepta ? 'Acepta mensajes' : 'Sin permiso'}</button>
+      <button class="mini" data-a="editarContacto" data-v="${c.id}"><i class="ti ti-edit"></i></button>
+      <button class="mini del" data-a="borrar" data-t="contactos" data-v="${c.id}"><i class="ti ti-trash"></i></button></div></div>`).join('')
+      : '<div class="vacio">Agrega contactos a mano o importa tu Excel.</div>'}
+  </div>`;
+}
+
+function vAgenda() {
+  const lista = [...S.eventos].sort(porFechaHora);
+  const prox = lista.filter(e => e.fecha >= hoyISO()), pas = lista.filter(e => e.fecha < hoyISO()).reverse();
+  // Cada evento: sus avisos (según la fecha) y el historial de lo que ya se le envió.
+  const fila = e => {
+    const hoy = hoyISO(), futuro = e.fecha >= hoy;
+    const tipos = [futuro && 'invitar', e.fecha === hoy && 'hoy', futuro && 'cambio', futuro && 'suspendido', e.fecha <= hoy && 'gracias'].filter(Boolean);
+    const avisos = S.envios.filter(x => x.evento === e.id);
+    return `<div class="row ev-fila"><div style="min-width:0;flex:1">
+      <b>${h(e.titulo)}</b><div class="sub">${fechaBonita(e.fecha)} · ${h(e.hora)} · ${h(e.lugar)}${e.sector ? ' · ' + h(e.sector) : ''}</div>
+      <div class="acts ev-avisos">${tipos.map(k => `<button class="mini${k === 'suspendido' ? ' del' : ''}" data-a="aviso" data-k="${k}" data-v="${e.id}"><i class="ti ${TIPOS_AVISO[k].icono}"></i> ${TIPOS_AVISO[k].nombre}</button>`).join('')}</div>
+      ${avisos.length ? `<div class="ev-hist">${avisos.map(x => `<span class="tag" style="--c:${x.tipo === 'suspendido' ? '#C62828' : x.tipo === 'cambio' ? '#DD6A12' : '#1E5FA3'}">${h(TIPOS_AVISO[x.tipo]?.nombre || 'Aviso')} · ${x.canal === 'wa' ? 'WhatsApp' : 'Correo'} ${fmt(x.cantidad)} · ${fechaBonita(new Date(x.created_at).toLocaleDateString('en-CA'))}</span>`).join('')}</div>` : ''}
+    </div>
+    <button class="mini del" data-a="borrar" data-t="eventos" data-v="${e.id}" aria-label="Borrar evento"><i class="ti ti-trash"></i></button></div>`;
+  };
+  return `
+  ${vCalendario()}
+  <div class="card"><h3>Nuevo evento</h3>
+    <div class="grid">
+      <div><label class="f">Qué</label><input id="e_titulo" placeholder="Reunión con vecinos"></div>
+      <div><label class="f">Fecha</label><input id="e_fecha" type="date" value="${S.diaSel || hoyISO()}"></div>
+      <div><label class="f">Hora</label><input id="e_hora" placeholder="4:00 pm"></div>
+      <div><label class="f">Lugar</label><input id="e_lugar" placeholder="Plaza Bolívar de Acarigua"></div>
+      <div><label class="f">Sector</label><select id="e_sector"><option value="">Todos</option>${CFG.SECTORES.map(s => `<option>${h(s)}</option>`).join('')}</select></div>
+    </div>
+    <div style="margin-top:10px"><button class="pri" data-a="guardarEvento">Guardar</button></div>
+    <p class="err" id="e_err"></p>
+  </div>
+  <div class="card"><h3><i class="ti ti-calendar-event"></i> Próximos eventos</h3>${prox.length ? prox.map(fila).join('') : '<div class="vacio">No hay eventos próximos.</div>'}</div>
+  ${pas.length ? `<div class="card"><h3><i class="ti ti-history"></i> Historial de eventos</h3>${pas.slice(0, 30).map(fila).join('')}</div>` : ''}`;
+}
+
+function vEnviar() {
+  const d = S.draft;
+  if (S.cola) return vCola();
+  return `
+  <div class="card"><h3><i class="ti ti-speakerphone"></i> Aviso</h3>
+    <div class="tipos-aviso">${Object.entries(TIPOS_AVISO).map(([k, t]) => `<button class="mini ${d.tipo === k ? 'on' : ''}" data-a="tipoAviso" data-v="${k}"><i class="ti ${t.icono}"></i> ${t.nombre}</button>`).join('')}</div>
+    <div class="grid">
+      <div><label class="f">Evento</label><select data-f="evento"><option value="">Ninguno</option>${[...S.eventos].sort(porFechaHora).filter(e => d.tipo === 'gracias' ? e.fecha <= hoyISO() : e.fecha >= hoyISO()).map(e => `<option value="${e.id}" ${d.evento === e.id ? 'selected' : ''}>${fechaBonita(e.fecha)} · ${h(e.titulo)}</option>`).join('')}</select></div>
+      <div><label class="f">Cuándo</label><input data-f="fecha" value="${h(d.fecha)}" placeholder="hoy / el sábado 31"></div>
+      <div><label class="f">${d.tipo === 'cambio' ? 'Nueva hora' : 'Hora'}</label><input data-f="hora" value="${h(d.hora)}" placeholder="4:00 pm">${d.tipo === 'cambio' && d.horaAntes ? `<div class="sub">Antes: ${h(d.horaAntes)}</div>` : ''}</div>
+      <div><label class="f">${d.tipo === 'cambio' ? 'Nuevo lugar' : 'Lugar'}</label><input data-f="lugar" value="${h(d.lugar)}" placeholder="Plaza Bolívar de Acarigua">${d.tipo === 'cambio' && d.lugarAntes ? `<div class="sub">Antes: ${h(d.lugarAntes)}</div>` : ''}</div>
+      ${d.tipo === 'suspendido' ? `<div><label class="f">Motivo (opcional)</label><input data-f="motivo" value="${h(d.motivo)}" placeholder="la lluvia"></div>` : ''}
+    </div>
+    <div style="margin-top:12px"><label class="f">A quién</label>
+      <div class="acts">
+        <button class="mini ${!d.elegir ? 'pri' : ''}" data-a="modoDest" data-v="sector"><i class="ti ti-map-pin"></i> Por sector</button>
+        <button class="mini ${d.elegir ? 'pri' : ''}" data-a="modoDest" data-v="elegir"><i class="ti ti-checklist"></i> Elegir contactos</button>
+      </div>
+      ${d.elegir ? vElegirContactos() : `<select data-f="sector" style="margin-top:8px"><option value="">Todos los sectores</option>${CFG.SECTORES.map(s => `<option ${d.sector === s ? 'selected' : ''}>${h(s)}</option>`).join('')}</select>`}
+    </div>
+    <div style="margin-top:10px"><label class="f">Mensaje (usa {nombre}, {fecha}, {hora}, {lugar}, {candidato})</label><textarea data-f="mensaje">${h(d.mensaje)}</textarea></div>
+    <div style="margin-top:10px"><label class="f">Asunto del correo</label><input data-f="asunto" value="${h(d.asunto)}"></div>
+    <div style="margin-top:12px"><label class="f">Así lo verá la gente (WhatsApp)</label><div class="prev" id="previa"></div></div>
+    <details style="margin-top:12px"><summary class="f" style="cursor:pointer">Ver cómo llega el correo</summary>
+      <iframe id="previaCorreo" title="Vista previa del correo" style="width:100%;height:820px;border:1px solid var(--borde,#dde5ee);border-radius:10px;background:#EEF4FB;margin-top:8px"></iframe></details>
+    ${S.electoral ? `<label class="sub" style="display:flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" data-f="revisado" style="width:auto" ${d.revisado ? 'checked' : ''}> Revisé que este mensaje cumple las normas del CNE</label>` : ''}
+    <div class="acts" style="margin-top:12px">
+      <button class="pri" data-a="enviarWa"><i class="ti ti-brand-whatsapp"></i> WhatsApp (<span id="nWa">0</span>)</button>
+      <button data-a="enviarCorreo"><i class="ti ti-mail"></i> Correo (<span id="nMail">0</span>)</button>
+      <button data-a="flyer"><i class="ti ti-photo-down"></i> Descargar imagen</button>
+      ${navigator.canShare ? '<button data-a="flyer" data-v="compartir"><i class="ti ti-share"></i> Compartir imagen</button>' : ''}
+    </div>
+    <p class="err" id="s_err"></p><p class="okm" id="s_ok"></p>
+    <p class="sub">Solo se envía a contactos que aceptaron recibir mensajes.</p>
+  </div>`;
+}
+
+// Lista para marcar a quién se envía: todos los contactos que aceptaron mensajes, con buscador y "Seleccionar todos".
+function vElegirContactos() {
+  const d = S.draft, lista = S.contactos.filter(c => c.acepta).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+  return `<div class="acts" style="margin-top:8px;align-items:center">
+      <input id="dest_buscar" placeholder="Buscar contacto" style="flex:1;min-width:160px">
+      <button class="mini" data-a="destTodos"><i class="ti ti-checks"></i> Seleccionar todos</button>
+      <button class="mini" data-a="destNinguno">Ninguno</button>
+    </div>
+    <div class="sub" style="margin-top:6px"><b id="nElegidos">${d.elegidos.length}</b> de ${lista.length} seleccionados</div>
+    <div class="dest-lista">${lista.length ? lista.map(c => `<label data-fila-dest="${h((c.nombre + ' ' + c.sector + ' ' + c.correo + ' ' + c.telefono).toLowerCase())}">
+      <input type="checkbox" data-dest="${c.id}" ${d.elegidos.includes(c.id) ? 'checked' : ''}>
+      <span style="min-width:0"><b>${h(c.nombre)}</b><span class="sub" style="display:block">${h(c.sector)} · ${c.correo ? h(c.correo) : 'sin correo'} · ${c.telefono ? h(c.telefono) : 'sin teléfono'}</span></span></label>`).join('')
+      : '<div class="vacio">No hay contactos que hayan aceptado mensajes.</div>'}</div>`;
+}
+
+function vCola() {
+  const q = S.cola, c = q.lista[q.i];
+  return `
+  <div class="card"><h3><i class="ti ti-brand-whatsapp"></i> Enviando por WhatsApp</h3>
+    <p class="sub">Contacto ${q.i + 1} de ${q.lista.length} · enviados ${q.enviados}</p>
+    <div class="bar" style="margin-bottom:12px"><div style="width:${Math.round(q.i / q.lista.length * 100)}%"></div></div>
+    <div class="row"><div><b>${h(c.nombre)}</b><div class="sub">${h(c.sector)} · ${h(c.telefono)}</div></div></div>
+    <div class="prev" style="margin:10px 0">${h(armar(S.draft.mensaje, c))}</div>
+    <p class="sub">Toca "Con imagen" para que le llegue el diseño completo con el mensaje (o "Solo texto"), dale enviar en WhatsApp y vuelve aquí para el siguiente.</p>
+    <div class="acts"><button class="pri" data-a="waImagen"><i class="ti ti-photo"></i> Con imagen</button><button data-a="waAbrir"><i class="ti ti-brand-whatsapp"></i> Solo texto</button><button data-a="waSaltar">Saltar</button><button class="del" data-a="waTerminar">Terminar</button></div>
+  </div>`;
+}
+
+function vHistorial() {
+  return `<div class="card"><h3>Historial de envíos</h3>
+    ${S.envios.length ? S.envios.map(e => `<div class="row"><div><b>${h(e.lugar || 'Aviso')}</b><div class="sub">${new Date(e.created_at).toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })} · ${e.canal === 'wa' ? 'WhatsApp' : 'Correo'} · ${h(e.sector || 'Todos')}</div><div class="sub">${h(e.mensaje).slice(0, 120)}</div></div><b>${fmt(e.cantidad)}</b></div>`).join('')
+      : '<div class="vacio">Aquí aparecerán los avisos que envíes.</div>'}
+  </div>`;
+}
+
+const nombreCompleto = m => `${m.nombre || ''} ${m.apellido || ''}`.trim();
+const armarEquipo = (texto, m) => texto.replaceAll('{nombre}', (m.nombre || '').trim().split(/\s+/)[0])
+  .replaceAll('{cargo}', m.cargo || 'parte del equipo').replaceAll('{funciones}', m.funciones || 'las conversaremos pronto');
+
+// ---------- Correos con diseño (bienvenida al equipo y avisos de actividades) ----------
+// Estilo del volante de campaña: franja arriba, carta, foto y firma de Héctor, franja naranja abajo.
+// Todo en línea para que se vea bien en Gmail. La foto y las firmas se sirven desde la misma app (logo/hector.png sin fondo, logo/firma.png, logo/firma-blanca.png).
+// En los textos, **texto** sale en negrita y "Héctor García" sale con su firma.
+function correoTexto(s) {
+  const firmaLinea = `<img src="${h(location.origin)}/logo/firma.png" height="38" alt="Héctor García" style="display:inline-block;border:0;height:38px;width:auto;vertical-align:-12px;">`;
+  return h(s).replace(/\*\*(.+?)\*\*/g, '<strong style="color:#0F3D6E;">$1</strong>').replace(/H[ée]ctor Garc[íi]a/gi, firmaLinea).replace(/\n/g, '<br>');
+}
+const correoParrafos = texto => texto.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+
+// Arma el correo completo: cabecera, el cuerpo que se le pase, la foto con la firma y la frase final, y el pie con las redes.
+function correoMarco(cuerpo, frase) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#EEF4FB;padding:24px 0;font-family:Arial,Helvetica,sans-serif;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;">
+<tr><td bgcolor="#0A2D52" style="background:#0A2D52;background-image:linear-gradient(115deg,#071F3A 0%,#0F3D6E 45%,#2F5D8F 82%,#E2650F 82%,#E2650F 87%,#FF8A3D 87%,#FF8A3D 90%,#0F3D6E 90%,#123F70 100%);padding:26px 32px 28px;">
+<img src="${h(location.origin)}/logo/firma-blanca.png" width="270" alt="Héctor García" style="display:block;border:0;width:270px;height:auto;">
+<div style="color:#FF8A3D;font-size:46px;font-weight:900;line-height:1;font-style:italic;letter-spacing:-1px;text-transform:uppercase;text-shadow:0 4px 0 #8A3300,0 8px 18px rgba(0,0,0,.45);">Se sienten pasos</div>
+<div style="color:#ffffff;font-size:13px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;margin-top:14px;opacity:.85;">Municipio Páez &#9679; Portuguesa</div>
+</td></tr>
+<tr><td height="6" bgcolor="#E2650F" style="height:6px;line-height:6px;font-size:0;background:#E2650F;background-image:linear-gradient(90deg,#FF8A3D,#D9560A);">&nbsp;</td></tr>
+<tr><td style="padding:30px 32px 0;color:#2a3440;font-size:15px;line-height:1.65;text-align:left;">
+${cuerpo}
+</td></tr>
+<tr><td bgcolor="#E1EDFA" style="background:#E1EDFA;background-image:linear-gradient(180deg,#EAF2FB,#D6E6F7);padding:18px 0 0 32px;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td valign="middle" style="padding:0 10px 18px 0;">
+<div style="color:#E2650F;font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;white-space:nowrap;">Municipio Páez &#9679; Portuguesa</div>
+<div style="font-family:'Arial Black',Arial,Helvetica,sans-serif;color:#0F3D6E;font-size:26px;font-weight:900;line-height:1.08;letter-spacing:-.5px;text-transform:uppercase;">${frase.replace(/(\S+)$/, '<span style="color:#E2650F;">$1</span>')}</div>
+<div style="width:56px;height:5px;background:#E2650F;border-radius:3px;margin-top:14px;font-size:0;line-height:0;">&nbsp;</div>
+<div style="color:#0F3D6E;font-size:16px;font-style:italic;font-weight:bold;margin-top:12px;">Cuenta conmigo, <span style="color:#E2650F;">cuento contigo.</span></div>
+</td>
+<td width="180" valign="bottom" align="right" style="width:180px;"><img src="${h(location.origin)}/logo/hector.png" width="180" alt="Héctor García" style="display:block;border:0;width:180px;max-width:100%;height:auto;"></td>
+</tr></table>
+</td></tr>
+<tr><td align="center" bgcolor="#E2650F" style="background:#E2650F;background-image:linear-gradient(90deg,#F07A22,#D9560A);padding:20px 32px;">
+<table cellpadding="0" cellspacing="0" align="center"><tr>
+<td valign="middle"><img src="${h(location.origin)}/logo/firma-blanca.png" width="170" alt="Héctor García" style="display:block;border:0;width:170px;height:auto;"></td>
+<td valign="middle" style="padding-left:8px;color:#0F3D6E;font-size:28px;font-weight:900;font-style:italic;line-height:1;text-transform:uppercase;letter-spacing:-.5px;">Se sienten pasos</td>
+</tr></table>
+<div style="color:#FFE3CF;font-size:12px;margin-top:8px;">Municipio Páez · Portuguesa</div>
+<div style="margin-top:12px;font-size:13px;font-weight:bold;line-height:1.8;">
+<a href="https://instagram.com/hectorgarcia.paez" style="color:#ffffff;text-decoration:none;white-space:nowrap;"><img src="${h(location.origin)}/logo/instagram.png" width="16" height="16" alt="Instagram" style="display:inline-block;border:0;width:16px;height:16px;vertical-align:-3px;margin-right:4px;">@hectorgarcia.paez</a>
+<span style="color:#FFC9A3;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+<a href="mailto:contacto.hectorgarcia@gmail.com" style="color:#ffffff;text-decoration:none;">&#9993; contacto.hectorgarcia@gmail.com</a>
+</div>
+</td></tr>
+</table>
+</td></tr></table>`;
+}
+
+// Bienvenida al equipo. No lleva datos de acceso a la app: un correo se puede reenviar. Los accesos se crean en Usuarios y se entregan en persona.
+function correoBienvenidaHtml(m) {
+  const funciones = String(m.funciones || '').split(/\n|;/).map(f => f.trim()).filter(Boolean);
+  return correoMarco(`${correoParrafos(armarEquipo(S.bienvenida.texto, m)).map((p, i) => `<p style="margin:0 0 16px;">${i === 0 ? `<strong>${correoTexto(p)}</strong>` : correoTexto(p)}</p>`).join('\n')}
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#E1EDFA;border-left:4px solid #E2650F;border-radius:4px;margin:6px 0 18px;">
+<tr><td style="padding:14px 20px;font-size:14px;color:#0F3D6E;line-height:1.9;text-align:left;">
+<strong>Tu cargo:</strong> ${h(m.cargo || 'Integrante del equipo')}
+${funciones.length ? `<br><strong>Tus funciones:</strong><br>${funciones.map(f => '&#10003; ' + h(f)).join('<br>')}` : ''}
+</td></tr></table>`, '¡Vamos con todo por Páez!');
+}
+
+// Avisos de una actividad, según S.draft.tipo (TIPOS_AVISO). La invitación es el modelo "Calendario": hoja con el día,
+// HOY / MAÑANA y el sector, título, hora y lugar. Los demás cambian la parte de arriba (¡Es hoy!, antes/ahora, Suspendido, ¡Gracias por venir!).
+// Debajo va el mensaje y, según el tipo, "Cómo llegar" (Google Maps) y "Agendar" (Google Calendar).
+function correoActividadHtml(c) {
+  const d = S.draft, e = S.eventos.find(x => x.id === d.evento);
+  const f = e?.fecha ? new Date(e.fecha + 'T12:00:00') : null;
+  const dias = f ? Math.round((f - new Date(hoyISO() + 'T12:00:00')) / 864e5) : null;
+  const cuando = dias === 0 ? 'Hoy' : dias === 1 ? 'Mañana' : f ? '' : d.fecha;
+  const sector = e?.sector || d.sector;
+  const arriba = [cuando, sector && `Parroquia ${sector}`].filter(Boolean).join(' · ');
+  const titulo = e?.titulo || d.lugar;
+  const sitio = `${d.lugar}, ${sector ? sector + ', ' : ''}Municipio Páez, Portuguesa`;
+  const mapa = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(sitio);
+  // Google Calendar: con hora, dura 2 horas; sin hora, todo el día.
+  let agendar = '';
+  if (f) {
+    const ymd = e.fecha.replaceAll('-', ''), min = minutos(d.hora);
+    const hhmm = m => String(Math.floor(m / 60)).padStart(2, '0') + String(m % 60).padStart(2, '0') + '00';
+    const sig = new Date(f.getTime() + 864e5).toLocaleDateString('en-CA').replaceAll('-', '');
+    const fechas = min < 9999 && min + 120 < 1440 ? `${ymd}T${hhmm(min)}/${ymd}T${hhmm(min + 120)}` : `${ymd}/${sig}`;
+    agendar = 'https://calendar.google.com/calendar/render?action=TEMPLATE&ctz=America/Caracas&text=' + encodeURIComponent(titulo + ' · Héctor García')
+      + '&dates=' + fechas + '&location=' + encodeURIComponent(sitio);
+  }
+  const hoja = f ? `<td width="112" valign="top" style="width:112px;padding-right:16px;">
+<table cellpadding="0" cellspacing="0" width="100" style="width:100px;border-radius:10px;overflow:hidden;text-align:center;">
+<tr><td bgcolor="#E2650F" style="background:#E2650F;color:#ffffff;font-size:13px;font-weight:900;letter-spacing:2px;padding:6px 0;text-transform:uppercase;">${f.toLocaleDateString('es-VE', { month: 'short' }).replace('.', '')}</td></tr>
+<tr><td bgcolor="#0F3D6E" style="background:#0F3D6E;color:#ffffff;font-size:46px;font-weight:900;line-height:1;padding:10px 0 4px;">${f.getDate()}</td></tr>
+<tr><td bgcolor="#0F3D6E" style="background:#0F3D6E;color:#A9C6E6;font-size:12px;font-weight:bold;padding:0 0 10px;text-transform:uppercase;">${f.toLocaleDateString('es-VE', { weekday: 'long' })}</td></tr>
+</table></td>` : '';
+  const boton = (url, texto, lleno) => `<td style="padding:0 10px 10px 0;"><table cellpadding="0" cellspacing="0"><tr><td style="${lleno ? 'background:#E2650F;' : 'border:2px solid #0F3D6E;'}border-radius:24px;">
+<a href="${h(url)}" style="display:inline-block;padding:${lleno ? '12px 26px' : '10px 22px'};color:${lleno ? '#ffffff' : '#0F3D6E'};text-decoration:none;font-weight:bold;font-size:14px;">${texto}</a></td></tr></table></td>`;
+  const etiqueta = (texto, color) => `<div style="display:inline-block;background:${color};color:#ffffff;font-size:14px;font-weight:900;letter-spacing:3px;padding:7px 16px;border-radius:4px;text-transform:uppercase;">${texto}</div>`;
+  const cajaGrande = (fondo, arribaTxt, grandeTxt, abajoTxt, colorArriba = '#FF8A3D') => `<table width="100%" cellpadding="0" cellspacing="0" bgcolor="${fondo}" style="background:${fondo};border-radius:10px;text-align:center;"><tr><td style="padding:22px 20px;">
+${arribaTxt ? `<div style="color:${colorArriba};font-size:14px;font-weight:900;letter-spacing:4px;text-transform:uppercase;">${arribaTxt}</div>` : ''}
+<div style="color:#ffffff;font-size:50px;font-weight:900;line-height:1;font-style:italic;letter-spacing:-2px;text-transform:uppercase;margin:6px 0;">${grandeTxt}</div>
+${abajoTxt}</td></tr></table>`;
+  const tipo = TIPOS_AVISO[d.tipo] ? d.tipo : 'invitar';
+  let arribaHtml, botones = [];
+  if (tipo === 'hoy') {
+    arribaHtml = cajaGrande('#0F3D6E', '&#9200; Recordatorio', '¡Es hoy!',
+      `${d.hora ? `<div style="color:#ffffff;font-size:26px;font-weight:900;">${h(d.hora)}</div>` : ''}<div style="color:#C9DCF2;font-size:15px;margin-top:6px;">&#128205; ${h(d.lugar)}${sector ? ' · Parroquia ' + h(sector) : ''}</div>`);
+    botones = [boton(mapa, '&#128205; Cómo llegar', true)];
+  } else if (tipo === 'cambio') {
+    const cambiaHora = d.horaAntes && d.hora !== d.horaAntes, cambiaLugar = d.lugarAntes && d.lugar !== d.lugarAntes;
+    const antesAhora = (antes, ahora, grande) => `<table width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 0;text-align:center;"><tr>
+<td width="46%" style="background:#F4F6F9;border-radius:8px;padding:12px 8px;"><div style="color:#8A97A6;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">Antes</div><div style="color:#8A97A6;font-size:${grande ? 26 : 16}px;font-weight:900;text-decoration:line-through;margin-top:4px;">${h(antes)}</div></td>
+<td width="8%" style="color:#E2650F;font-size:28px;font-weight:900;">&#10140;</td>
+<td width="46%" bgcolor="#0F3D6E" style="background:#0F3D6E;border-radius:8px;padding:12px 8px;"><div style="color:#FF8A3D;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">Ahora</div><div style="color:#ffffff;font-size:${grande ? 30 : 17}px;font-weight:900;margin-top:4px;">${h(ahora)}</div></td></tr></table>`;
+    arribaHtml = `${etiqueta('&#9888; ' + (cambiaHora && cambiaLugar ? 'Cambio de hora y lugar' : cambiaLugar ? 'Cambio de lugar' : 'Cambio de hora'), '#C62828')}
+<div style="color:#0F3D6E;font-size:25px;font-weight:900;line-height:1.15;margin:12px 0 4px;text-align:left;">${h(titulo)}</div>
+${arriba ? `<div style="color:#E2650F;font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-align:left;">${h(arriba)}</div>` : ''}
+${cambiaHora || !cambiaLugar ? antesAhora(d.horaAntes || '—', d.hora, true) : ''}${cambiaLugar ? antesAhora(d.lugarAntes, d.lugar, false) : ''}`;
+    botones = [boton(mapa, '&#128205; Cómo llegar', true), agendar && boton(agendar, '&#128197; Agendar', false)];
+  } else if (tipo === 'suspendido') {
+    arribaHtml = cajaGrande('#C62828', '', 'Suspendido', `<div style="color:#FFD9D9;font-size:14px;margin-top:6px;">${h(titulo)} · ${h(d.fecha)}${d.hora ? ' ' + h(d.hora) : ''}</div>`);
+  } else if (tipo === 'gracias') {
+    arribaHtml = cajaGrande('#0F3D6E', h(sector ? 'Parroquia ' + sector : d.lugar), '¡Gracias por venir!', `<div style="color:#C9DCF2;font-size:15px;margin-top:6px;">${h(titulo)}${f ? ' · ' + fechaBonita(e.fecha) : ''}</div>`);
+  } else {
+    arribaHtml = `<table width="100%" cellpadding="0" cellspacing="0"><tr>${hoja}
+<td valign="middle" style="text-align:left;">
+${arriba ? `<div style="color:#E2650F;font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">${h(arriba)}</div>` : ''}
+<div style="color:#0F3D6E;font-size:25px;font-weight:900;line-height:1.15;margin:6px 0;">${h(titulo)}</div>
+<div style="color:#2a3440;font-size:15px;">${d.hora ? `&#128339; ${h(d.hora)} &nbsp; ` : ''}&#128205; ${h(d.lugar)}</div>
+</td></tr></table>`;
+    botones = [boton(mapa, '&#128205; Cómo llegar', true), agendar && boton(agendar, '&#128197; Agendar', false)];
+  }
+  botones = botones.filter(Boolean);
+  return correoMarco(`${arribaHtml}
+<div style="height:18px;"></div>
+${correoParrafos(armar(d.mensaje, c)).map(p => `<p style="margin:0 0 16px;">${correoTexto(p)}</p>`).join('\n')}
+${botones.length ? `<table data-botones cellpadding="0" cellspacing="0" style="margin:6px 0 14px;"><tr>${botones.join('')}</tr></table>` : ''}`, TIPOS_AVISO[tipo].frase);
+}
+
+function vEquipo() {
+  const e = S.editEquipo ? S.equipo.find(x => x.id === S.editEquipo) || {} : {};
+  const lista = [...S.equipo].sort((a, b) => nombreCompleto(a).localeCompare(nombreCompleto(b)));
+  return `
+  <div class="card"><h3><i class="ti ti-user-plus"></i> ${S.editEquipo ? 'Editar integrante' : 'Nuevo integrante'}</h3>
+    <div class="grid">
+      <div><label class="f">Nombre</label><input id="q_nombre" value="${h(e.nombre)}" placeholder="María"></div>
+      <div><label class="f">Apellido</label><input id="q_apellido" value="${h(e.apellido)}" placeholder="Pérez"></div>
+      <div><label class="f">Correo</label><input id="q_correo" type="email" value="${h(e.correo)}" placeholder="maria@gmail.com"></div>
+      <div><label class="f">Teléfono</label><input id="q_tel" value="${h(e.telefono)}" placeholder="0414-1234567"></div>
+      <div><label class="f">Cargo</label><input id="q_cargo" value="${h(e.cargo)}" placeholder="Coordinadora de Acarigua"></div>
+    </div>
+    <div style="margin-top:10px"><label class="f">Funciones</label><textarea id="q_funciones" placeholder="Organizar las reuniones con vecinos, llevar la lista de voluntarios…">${h(e.funciones)}</textarea></div>
+    <div class="acts" style="margin-top:10px"><button class="pri" data-a="guardarEquipo">Guardar</button>${S.editEquipo ? '<button data-a="cancelarEquipo">Cancelar</button>' : ''}</div>
+    <p class="err" id="q_err"></p>
+  </div>
+  <div class="card"><h3><i class="ti ti-users-group"></i> Equipo (${lista.length})</h3>
+    ${lista.length ? lista.map(m => `<div class="row"><div style="min-width:0">
+        <b>${h(nombreCompleto(m))}</b>${m.cargo ? ` <span class="tag" style="--c:var(--azul)">${h(m.cargo)}</span>` : ''}
+        <div class="eq-mail"><i class="ti ti-mail"></i><span>${h(m.correo) || 'sin correo'}</span>
+          ${m.correo ? `<button class="mini" data-a="bienvenida" data-v="${m.id}"><i class="ti ti-send"></i> ${m.bienvenida_en ? 'Reenviar' : 'Enviar'}</button>` : ''}
+          ${m.bienvenida_en ? `<span class="sub">Bienvenida enviada ${fechaBonita(m.bienvenida_en.slice(0, 10))}</span>` : ''}</div>
+        <div class="eq-mail"><i class="ti ti-phone"></i><span>${h(m.telefono) || 'sin teléfono'}</span>
+          <button class="mini" data-a="bienvenidaWa" data-v="${m.id}"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button></div>
+        ${m.funciones ? `<div class="sub" style="white-space:pre-line">${h(m.funciones)}</div>` : ''}</div>
+      <div class="acts"><button class="mini" data-a="editarEquipo" data-v="${m.id}"><i class="ti ti-edit"></i></button>
+      <button class="mini del" data-a="borrar" data-t="equipo" data-v="${m.id}"><i class="ti ti-trash"></i></button></div></div>`).join('')
+      : '<div class="vacio">Agrega al primer integrante del equipo arriba.</div>'}
+  </div>
+  <div class="card"><h3><i class="ti ti-confetti"></i> Mensaje de bienvenida</h3>
+    <p class="sub" style="margin-top:0">Es el correo que sale al tocar "Enviar". Usa {nombre}. Pon **entre dos asteriscos** lo que quieras en negrita. El cargo y las funciones van solos en el recuadro (una función por línea).</p>
+    <div><label class="f">Asunto</label><input data-b="asunto" value="${h(S.bienvenida.asunto)}"></div>
+    <div style="margin-top:10px"><label class="f">Mensaje (deja una línea en blanco entre párrafos)</label><textarea data-b="texto" style="min-height:150px">${h(S.bienvenida.texto)}</textarea></div>
+    <div style="margin-top:12px"><label class="f">Así le llega</label><iframe id="q_previa" title="Vista previa del correo" style="width:100%;height:760px;border:1px solid var(--borde,#dde5ee);border-radius:10px;background:#EEF4FB"></iframe></div>
+  </div>`;
+}
+
+// ---------- Organigrama (aparte de Equipo) ----------
+// Árbol: cada cargo dice a quién reporta (padre). Los equipos aliados van abajo y no forman parte del árbol.
+const ORG_CSS = `
+.org{width:max-content;min-width:100%;margin:0 auto}
+.org ul{display:flex;justify-content:center;position:relative;margin:0;padding:24px 0 0}
+.org > ul{padding-top:0}
+.org li{list-style:none;position:relative;padding:24px 8px 0;text-align:center}
+.org li::before,.org li::after{content:'';position:absolute;top:0;right:50%;width:50%;height:24px;border-top:2px solid #0F3D6E}
+.org li::after{right:auto;left:50%;border-left:2px solid #0F3D6E}
+.org li:only-child{padding-top:0}
+.org li:only-child::before,.org li:only-child::after{display:none}
+.org li:first-child::before,.org li:last-child::after{border:0 none}
+.org li:last-child::before{border-right:2px solid #0F3D6E;border-radius:0 8px 0 0}
+.org li:first-child::after{border-radius:8px 0 0 0}
+.org ul ul::before{content:'';position:absolute;top:0;left:50%;height:24px;border-left:2px solid #0F3D6E}
+.org > ul > li:only-child{padding-top:0}
+.org-caja{display:inline-block;min-width:150px;max-width:210px;padding:12px 14px;border-radius:10px;background:#fff;border:2px solid #0F3D6E;box-shadow:0 4px 12px rgba(15,61,110,.12);font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.org-caja.n1{min-width:230px;background:#0F3D6E;background-image:linear-gradient(160deg,#2F5D8F,#0F3D6E 60%,#0A2D52);color:#fff;border-color:#0F3D6E}
+.org-caja.n2{border-color:#E2650F;border-top-width:6px}
+.org-cargo{display:block;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#E2650F;margin-bottom:4px}
+.org-caja.n1 .org-cargo{color:#FF8A3D}
+.org-nombre{display:block;font-size:15px;font-weight:800;color:#0F3D6E;line-height:1.2}
+.org-caja.n1 .org-nombre{color:#fff;font-size:17px}
+.org-vacia{color:#8A97A6;font-weight:400;font-style:italic}`;
+document.head.insertAdjacentHTML('beforeend', `<style>${ORG_CSS}</style>`);
+
+const porCreacion = (a, b) => (a.created_at || '').localeCompare(b.created_at || '');
+// Hijos de un cargo. Los que apuntan a un cargo que ya no existe suben a la raíz.
+function hijosDe(padre) {
+  const ids = new Set(S.organigrama.map(n => n.id));
+  return S.organigrama.filter(n => padre ? n.padre === padre : !n.padre || !ids.has(n.padre)).sort(porCreacion);
+}
+// El cargo y todos los que dependen de él (para no elegir de jefe a un subordinado).
+const ramaDe = id => [id, ...hijosDe(id).flatMap(n => ramaDe(n.id))];
+const nombreNodo = n => [n.nombre, n.apellido].filter(Boolean).join(' ');
+
+function arbolHtml(conBotones) {
+  const caja = (n, nivel) => {
+    const hs = hijosDe(n.id);
+    return `<li><div class="org-caja n${Math.min(nivel, 3)}"><span class="org-cargo">${h(n.cargo)}</span>
+      <span class="org-nombre">${nombreNodo(n) ? h(nombreNodo(n)) : '<span class="org-vacia">Por asignar</span>'}</span>
+      ${conBotones ? `<div class="org-acc"><button class="mini" data-a="editarNodo" data-v="${n.id}" aria-label="Editar"><i class="ti ti-edit"></i></button><button class="mini" data-a="hijoNodo" data-v="${n.id}" aria-label="Agregar debajo"><i class="ti ti-plus"></i></button><button class="mini del" data-a="borrarNodo" data-v="${n.id}" aria-label="Borrar"><i class="ti ti-trash"></i></button></div>` : ''}
+    </div>${hs.length ? `<ul>${hs.map(x => caja(x, nivel + 1)).join('')}</ul>` : ''}</li>`;
+  };
+  const raices = hijosDe(null);
+  return raices.length ? `<div class="org"><ul>${raices.map(n => caja(n, 1)).join('')}</ul></div>` : '';
+}
+
+function vOrganigrama() {
+  const e = S.editNodo && S.editNodo !== 'nuevo' ? S.organigrama.find(n => n.id === S.editNodo) || {} : {};
+  const bloqueados = e.id ? new Set(ramaDe(e.id)) : new Set();
+  const padreSel = e.id ? e.padre || '' : S.padreNuevo || '';
+  const opciones = [...S.organigrama].sort(porCreacion).filter(n => !bloqueados.has(n.id))
+    .map(n => `<option value="${n.id}" ${padreSel === n.id ? 'selected' : ''}>${h(n.cargo)}${nombreNodo(n) ? ' · ' + h(nombreNodo(n)) : ''}</option>`).join('');
+  const a = S.editAliado ? S.aliados.find(x => x.id === S.editAliado) || {} : {};
+  const aliados = [...S.aliados].sort(porCreacion);
+  return `
+  <div class="aviso" style="background:#EEF4FB;border-color:#C9DCF2;color:#0F3D6E"><i class="ti ti-info-circle"></i> El organigrama es aparte de la pestaña Equipo: aquí solo anotas cargos y nombres para armar el árbol y el PDF.</div>
+  <div class="card"><h3><i class="ti ti-sitemap"></i> ${e.id ? 'Editar cargo' : 'Agregar cargo'}</h3>
+    <div class="grid">
+      <div><label class="f">Cargo</label><input id="o_cargo" value="${h(e.cargo)}" placeholder="Coordinador general, Logística…"></div>
+      <div><label class="f">Nombre</label><input id="o_nombre" value="${h(e.nombre)}" placeholder="María"></div>
+      <div><label class="f">Apellido</label><input id="o_apellido" value="${h(e.apellido)}" placeholder="Pérez"></div>
+      <div><label class="f">Reporta a</label><select id="o_padre"><option value="">— Arriba de todo —</option>${opciones}</select></div>
+    </div>
+    <div class="acts" style="margin-top:10px"><button class="pri" data-a="guardarNodo">Guardar</button>${e.id || S.padreNuevo ? '<button data-a="cancelarNodo">Cancelar</button>' : ''}</div>
+    <p class="err" id="o_err"></p>
+  </div>
+  <div class="card"><div class="acts" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0"><i class="ti ti-hierarchy-2"></i> Organigrama (${S.organigrama.length})</h3>
+      <button class="pri" data-a="pdfOrganigrama"><i class="ti ti-file-type-pdf"></i> Descargar PDF</button></div>
+    ${S.organigrama.length ? `<div class="org-marco">${arbolHtml(true)}</div><p class="sub" style="margin:6px 0 0">Toca <i class="ti ti-plus"></i> en un cargo para agregar a alguien debajo.</p>` : '<div class="vacio">Agrega el primer cargo arriba (por ejemplo, Coordinador general).</div>'}
+  </div>
+  <div class="card"><h3><i class="ti ti-heart-handshake"></i> Equipos aliados</h3>
+    <p class="sub" style="margin-top:0">No van en el árbol: salen abajo en el PDF. El correo no se imprime.</p>
+    <div class="grid">
+      <div><label class="f">Nombre</label><input id="a_nombre" value="${h(a.nombre)}" placeholder="José"></div>
+      <div><label class="f">Apellido</label><input id="a_apellido" value="${h(a.apellido)}" placeholder="Rodríguez"></div>
+      <div><label class="f">Correo</label><input id="a_correo" type="email" value="${h(a.correo)}" placeholder="jose@gmail.com"></div>
+      <div><label class="f">Cargo</label><input id="a_cargo" value="${h(a.cargo)}" placeholder="Secretario municipal"></div>
+      <div><label class="f">Partido</label><input id="a_partido" value="${h(a.partido)}" placeholder="Nombre del partido"></div>
+    </div>
+    <div class="acts" style="margin-top:10px"><button class="pri" data-a="guardarAliado">Guardar</button>${S.editAliado ? '<button data-a="cancelarAliado">Cancelar</button>' : ''}</div>
+    <p class="err" id="a_err"></p>
+    ${aliados.length ? `<div class="aliados-grid" style="margin-top:12px">${aliados.map(x => `<div class="aliado">
+      <b>${h(nombreNodo(x))}</b>
+      ${x.cargo ? `<div class="sub">${h(x.cargo)}</div>` : ''}
+      ${x.partido ? `<span class="tag" style="--c:#E2650F;display:inline-block;margin-top:6px">${h(x.partido)}</span>` : ''}
+      ${x.correo ? `<div class="sub"><i class="ti ti-mail"></i> ${h(x.correo)}</div>` : ''}
+      <div class="acts" style="margin-top:8px"><button class="mini" data-a="editarAliado" data-v="${x.id}"><i class="ti ti-edit"></i></button><button class="mini del" data-a="borrar" data-t="aliados" data-v="${x.id}"><i class="ti ti-trash"></i></button></div>
+    </div>`).join('')}</div>` : ''}
+  </div>`;
+}
+
+// PDF: abre una hoja con diseño de campaña y el diálogo de imprimir (ahí se elige "Guardar como PDF").
+function pdfOrganigrama() {
+  const O = h(location.origin), aliados = [...S.aliados].sort(porCreacion);
+  const fecha = new Date().toLocaleDateString('es-VE', { day: 'numeric', month: 'long', year: 'numeric' });
+  const w = window.open('', '_blank');
+  if (!w) { alert('El navegador bloqueó la ventana. Permite ventanas emergentes para esta página.'); return; }
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Organigrama · Héctor García</title>
+<style>
+@page{size:A4 landscape;margin:9mm}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1d2733;background:#fff}
+.cab{position:relative;overflow:hidden;border-radius:12px;padding:22px 30px;color:#fff;background:#0A2D52;background-image:linear-gradient(115deg,#071F3A 0%,#0F3D6E 50%,#2F5D8F 100%);border-bottom:6px solid #E2650F;display:flex;justify-content:space-between;align-items:center}
+.cab .t{font-size:13px;font-weight:800;letter-spacing:5px;color:#FF8A3D;text-transform:uppercase}
+.cab h1{margin:4px 0 2px;font-family:'Arial Black',Arial,sans-serif;font-size:40px;line-height:1;letter-spacing:-1px;text-transform:uppercase}
+.cab .s{font-size:12px;font-weight:bold;letter-spacing:3px;opacity:.85;text-transform:uppercase}
+.cab .der{text-align:right}
+.cab .lema{font-family:'Arial Black',Arial,sans-serif;font-size:22px;color:#FF8A3D;text-transform:uppercase;letter-spacing:-.5px}
+.cab img{display:block;width:190px;margin-left:auto}
+.zona{padding:22px 4px 8px;display:flex;justify-content:center}
+${ORG_CSS}
+h2{font-family:'Arial Black',Arial,sans-serif;font-size:18px;color:#0F3D6E;text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px;display:flex;align-items:center;gap:10px}
+h2::after{content:'';flex:1;height:3px;background:linear-gradient(90deg,#E2650F,transparent)}
+.ali{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;break-inside:avoid}
+.ali div{border:1.5px solid #C9DCF2;border-left:5px solid #E2650F;border-radius:8px;padding:9px 12px;break-inside:avoid}
+.ali b{display:block;color:#0F3D6E;font-size:14px}
+.ali span{display:block;font-size:12px;color:#4a5866;margin-top:2px}
+.ali i{display:inline-block;margin-top:5px;font-style:normal;font-size:11px;font-weight:800;color:#fff;background:#E2650F;border-radius:20px;padding:2px 9px}
+.pie{margin-top:16px;padding-top:8px;border-top:2px solid #0F3D6E;display:flex;justify-content:space-between;font-size:11px;color:#4a5866}
+.pie b{color:#0F3D6E}
+</style></head><body>
+<div class="cab"><div><div class="t">Municipio Páez · Portuguesa</div><h1>Organigrama</h1><div class="s">Equipo de campaña · ${h(fecha)}</div></div>
+<div class="der"><div class="lema">Se sienten pasos</div><img src="${O}/logo/firma-blanca.png" alt="Héctor García"></div></div>
+<div class="zona">${arbolHtml(false) || '<p>Aún no hay cargos en el organigrama.</p>'}</div>
+${aliados.length ? `<h2>Equipos aliados</h2><div class="ali">${aliados.map(x => `<div><b>${h(nombreNodo(x))}</b>${x.cargo ? `<span>${h(x.cargo)}</span>` : ''}${x.partido ? `<i>${h(x.partido)}</i>` : ''}</div>`).join('')}</div>` : ''}
+<div class="pie"><span><b>Héctor García</b> · Se sienten pasos · Municipio Páez, Portuguesa</span><span>@hectorgarcia.paez · contacto.hectorgarcia@gmail.com</span></div>
+<script>
+window.onload = () => {
+  // Si el árbol es más ancho que la hoja, se achica para que quepa entero.
+  const org = document.querySelector('.org'), max = document.querySelector('.zona').clientWidth;
+  if (org && org.scrollWidth > max) org.style.zoom = max / org.scrollWidth;
+  setTimeout(() => window.print(), 300);
+};
+<\/script></body></html>`);
+  w.document.close();
+}
+
+const METODOS = {
+  'Pago Móvil': { c: '#1E5FA3', i: 'ti-device-mobile' }, 'Zelle': { c: '#6D28D9', i: 'ti-building-bank' },
+  'Efectivo': { c: '#127A3E', i: 'ti-cash' }, 'Transferencia': { c: '#0E7490', i: 'ti-arrows-exchange' },
+  'En especie': { c: '#DD6A12', i: 'ti-package' }
+};
+
+function vRecaudacion() {
+  const usd = S.donaciones.filter(d => d.moneda === 'USD').reduce((a, d) => a + Number(d.monto), 0);
+  const bs = S.donaciones.filter(d => d.moneda === 'Bs').reduce((a, d) => a + Number(d.monto), 0);
+  const usdMes = S.donaciones.filter(d => d.moneda === 'USD' && mismoMes(d.fecha)).reduce((a, d) => a + Number(d.monto), 0);
+  const pct = Math.min(100, Math.round(usdMes / (CFG.META_MENSUAL_USD || 1) * 100));
+  const falta = Math.max(0, (CFG.META_MENSUAL_USD || 0) - usdMes);
+  const mesNombre = new Date().toLocaleDateString('es-VE', { month: 'long' });
+  const porMetodo = Object.keys(METODOS).map(m => ({ m, v: S.donaciones.filter(d => d.metodo === m && d.moneda === 'USD').reduce((a, d) => a + Number(d.monto), 0) })).filter(x => x.v > 0).sort((a, b) => b.v - a.v);
+  const maxMetodo = Math.max(1, ...porMetodo.map(x => x.v));
+  return `
+  <div class="hero">
+    <div class="et">Recaudado en ${mesNombre}</div>
+    <div class="monto">$ ${fmt(usdMes)}</div>
+    <div class="de">de una meta de $ ${fmt(CFG.META_MENSUAL_USD)}</div>
+    <div class="prog"><div style="width:${pct}%"></div></div>
+    <div class="pie"><b>${pct}% de la meta</b><span>${falta ? `Faltan $ ${fmt(falta)}` : '¡Meta cumplida!'}</span></div>
+    <div class="stats">
+      <div><div class="l">Total en dólares</div><div class="v">$ ${fmt(usd)}</div></div>
+      <div><div class="l">Total en bolívares</div><div class="v">Bs ${fmt(bs)}</div></div>
+      <div><div class="l">Donaciones</div><div class="v">${fmt(S.donaciones.length)}</div></div>
+    </div>
+  </div>
+  ${porMetodo.length ? `<div class="card"><h3><i class="ti ti-chart-bar"></i> Por forma de pago (USD)</h3><div class="metodos">
+    ${porMetodo.map(({ m, v }) => `<div class="metodo" style="--c:${METODOS[m].c}"><span><i class="ti ${METODOS[m].i}" style="color:var(--c)"></i> ${h(m)}</span><div class="b"><div style="width:${v / maxMetodo * 100}%"></div></div><span class="m">$ ${fmt(v)}</span></div>`).join('')}
+  </div></div>` : ''}
+  <div class="card"><h3><i class="ti ti-circle-plus"></i> Registrar donación</h3>
+    <div class="grid">
+      <div><label class="f">Donante</label><input id="d_nombre" placeholder="Pedro Gil"></div>
+      <div><label class="f">Fecha</label><input id="d_fecha" type="date" value="${hoyISO()}"></div>
+      <div><label class="f">Monto</label><input id="d_monto" type="number" min="0" step="0.01" placeholder="100"></div>
+      <div><label class="f">Moneda</label><select id="d_moneda"><option>USD</option><option>Bs</option></select></div>
+      <div><label class="f">Forma</label><select id="d_metodo"><option>Pago Móvil</option><option>Zelle</option><option>Efectivo</option><option>Transferencia</option><option>En especie</option></select></div>
+      <div><label class="f">Nota</label><input id="d_nota" placeholder="200 franelas, referencia…"></div>
+    </div>
+    ${DEMO ? '' : '<div style="margin-top:10px"><label class="f">Comprobante (foto)</label><input id="d_comp" type="file" accept="image/*,.pdf"></div>'}
+    <div style="margin-top:10px"><button class="pri" data-a="guardarDonacion">Guardar</button></div>
+    <p class="err" id="d_err"></p>
+  </div>
+  <div class="card"><div class="acts" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0"><i class="ti ti-heart-handshake"></i> Donaciones</h3><button class="mini" data-a="exportarDonaciones"><i class="ti ti-download"></i> Exportar a Excel</button></div>
+    ${S.donaciones.length ? [...S.donaciones].sort((a, b) => b.fecha.localeCompare(a.fecha)).map(d => { const me = METODOS[d.metodo] || { c: '#5F6B7A', i: 'ti-coin' }; return `<div class="row" style="--c:${me.c}"><div style="display:flex;gap:12px;align-items:center;min-width:0"><span class="don-ic"><i class="ti ${me.i}"></i></span><div style="min-width:0"><b>${h(d.donante)}</b><div class="sub">${fechaBonita(d.fecha)} · <span class="tag">${h(d.metodo)}</span>${d.nota ? ' · ' + h(d.nota) : ''}</div></div></div>
+      <div class="acts" style="align-items:center;flex-wrap:nowrap"><span class="don-monto">${d.monto ? (d.moneda === 'USD' ? '$ ' : 'Bs ') + fmt(d.monto) : 'En especie'}</span>
+      ${d.comprobante ? `<button class="mini" data-a="verComprobante" data-v="${h(d.comprobante)}"><i class="ti ti-receipt"></i></button>` : ''}
+      <button class="mini del" data-a="borrar" data-t="donaciones" data-v="${d.id}"><i class="ti ti-trash"></i></button></div></div>`; }).join('')
+      : '<div class="vacio">Registra la primera donación arriba.</div>'}
+  </div>`;
+}
+
+function vUsuarios() {
+  const lista = [...S.usuarios].sort((a, b) => esAdminCorreo(b.email) - esAdminCorreo(a.email) || usuarioCorto(a.email).localeCompare(usuarioCorto(b.email)));
+  return `
+  <div class="card"><h3>Crear usuario</h3>
+    <div class="grid">
+      <div><label class="f">Usuario</label><input id="u_user" autocapitalize="none" autocomplete="off" placeholder="maria"></div>
+      <div><label class="f">Clave (mínimo 6)</label><input id="u_pass" autocomplete="new-password" placeholder="Clave para entregarle"></div>
+    </div>
+    <p class="sub" style="margin-top:8px">La persona entra escribiendo solo el usuario y la clave. Ve Campaña, pero no Recaudación ni Elecciones.</p>
+    <div style="margin-top:10px"><button class="pri" data-a="crearUsuario"><i class="ti ti-user-plus"></i> Crear</button></div>
+    <p class="err" id="u_err"></p>
+  </div>
+  <div class="card"><h3>Usuarios (${lista.length})</h3>
+    ${lista.length ? lista.map(u => `<div class="row"><div><b>${h(usuarioCorto(u.email))}</b><div class="sub">${esAdminCorreo(u.email) ? 'Administrador · ve todo' : esSoloAgenda(u.email) ? 'Solo Agenda' : 'Equipo · solo Campaña'}${u.ultimo ? ' · último ingreso ' + fechaBonita(u.ultimo.slice(0, 10)) : ' · aún no entra'}</div></div>
+      ${esAdminCorreo(u.email) ? '' : `<div class="acts"><button class="mini" data-a="claveUsuario" data-v="${u.id}"><i class="ti ti-key"></i> Clave</button><button class="mini del" data-a="borrarUsuario" data-v="${u.id}"><i class="ti ti-trash"></i></button></div>`}</div>`).join('')
+      : '<div class="vacio">Crea el primer usuario del equipo arriba.</div>'}
+  </div>`;
+}
+
+function actualizarPrevia() {
+  if (!$('previa')) return;
+  const primero = destinatarios('wa')[0] || destinatarios('mail')[0];
+  $('previa').textContent = armar(S.draft.mensaje, primero);
+  if ($('previaCorreo')) $('previaCorreo').srcdoc = `<body style="margin:0">${correoActividadHtml(destinatarios('mail')[0] || primero)}</body>`;
+  $('nWa').textContent = destinatarios('wa').length;
+  $('nMail').textContent = destinatarios('mail').length;
+}
+
+// ---------- Acciones ----------
+function puedeEnviar() {
+  const d = S.draft;
+  if (!d.lugar.trim() || !d.mensaje.trim()) return 'Escribe el lugar y el mensaje.';
+  if (S.electoral && !d.revisado) return 'Marca que revisaste las normas del CNE.';
+  return '';
+}
+
+async function registrarEnvio(canal, cantidad) {
+  const d = S.draft;
+  const row = { canal, sector: d.elegir ? 'Elegidos' : d.sector || null, lugar: d.lugar, mensaje: armar(d.mensaje, { nombre: '{nombre}' }), cantidad };
+  // evento y tipo arman el historial de cada evento en la Agenda (columnas nuevas de envios; si aún no existen, se guarda sin ellas).
+  try { await db.insert('envios', { ...row, evento: d.evento || null, tipo: d.tipo }); }
+  catch (e) { if (!/evento|tipo|column/i.test(e.message || '')) throw e; await db.insert('envios', row); }
+  S.envios = await db.list('envios');
+}
+
+const A = {
+  tab: ({ v }) => { S.tab = v; S.cola = null; render(); scrollTo(0, 0); },
+  modulo: ({ v }) => {
+    S.modulo = v; S.tab = tabsDe(v)[0][0]; S.cola = null;
+    try { localStorage.setItem('cp_modulo', v); } catch {}
+    render(); scrollTo(0, 0);
+  },
+  salir: async () => {
+    if (!confirm('¿Salir de la app?')) return;
+    if (!DEMO) await sb.auth.signOut();
+    location.reload();
+  },
+
+  guardarContacto: () => accion(async () => {
+    const nombre = $('c_nombre').value.trim();
+    if (!nombre) { $('c_err').textContent = 'Escribe el nombre.'; return; }
+    const row = { nombre, telefono: $('c_tel').value.trim(), correo: $('c_correo').value.trim(), sector: $('c_sector').value, acepta: $('c_acepta').checked };
+    if (S.editContacto) await db.update('contactos', S.editContacto, row); else await db.insert('contactos', row);
+    S.editContacto = null; S.contactos = await db.list('contactos'); render();
+  }),
+  editarContacto: ({ v }) => { S.editContacto = v; render(); scrollTo(0, 0); },
+  cancelarContacto: () => { S.editContacto = null; render(); },
+  togglePermiso: ({ v }) => accion(async () => {
+    const c = S.contactos.find(x => x.id === v);
+    await db.update('contactos', v, { acepta: !c.acepta }); c.acepta = !c.acepta; render();
+  }),
+  importar: () => $('archivo').click(),
+  exportarContactos: () => exportar(S.contactos.map(c => ({ nombre: c.nombre, telefono: c.telefono, correo: c.correo, sector: c.sector, acepta: c.acepta ? 'sí' : 'no' })), 'contactos'),
+
+  guardarEvento: () => accion(async () => {
+    const titulo = $('e_titulo').value.trim(), fecha = $('e_fecha').value, lugar = $('e_lugar').value.trim();
+    if (!titulo || !fecha || !lugar) { $('e_err').textContent = 'Completa qué, fecha y lugar.'; return; }
+    await db.insert('eventos', { titulo, fecha, hora: $('e_hora').value.trim(), lugar, sector: $('e_sector').value || null });
+    S.eventos = await db.list('eventos'); render();
+  }),
+  invitar: ({ v }) => A.aviso({ v, k: 'invitar' }),
+  aviso: ({ v, k }) => { usarEvento(v, k); S.tab = 'enviar'; S.cola = null; render(); scrollTo(0, 0); },
+  tipoAviso: ({ v }) => { usarTipo(v); render(); },
+  modoDest: ({ v }) => { S.draft.elegir = v === 'elegir'; render(); },
+  // Marca o desmarca los contactos visibles (respeta el buscador).
+  destTodos: () => {
+    const ids = [...document.querySelectorAll('[data-dest]')].filter(i => i.closest('label').style.display !== 'none').map(i => i.dataset.dest);
+    S.draft.elegidos = [...new Set([...S.draft.elegidos, ...ids])]; render();
+  },
+  destNinguno: () => { S.draft.elegidos = []; render(); },
+  flyer: ({ v }) => accion(async () => {
+    const err = puedeEnviar(); if (err) { $('s_err').textContent = err; return; }
+    $('s_err').textContent = ''; $('s_ok').textContent = 'Armando la imagen…';
+    await bajarOCompartir(await flyerBlob(), `aviso-${S.draft.tipo}-${nombreArchivo(S.draft.lugar)}.png`, armar(S.draft.asunto, { nombre: '' }), v === 'compartir');
+    $('s_ok').textContent = 'Listo: imagen lista para mandar por WhatsApp.';
+  }),
+  dia: ({ v }) => { S.diaSel = S.diaSel === v ? null : v; render(); },
+  mesHoy: () => { S.mes = hoyISO().slice(0, 7); S.diaSel = hoyISO(); render(); },
+  irFormEvento: () => { $('e_fecha').value = S.diaSel; $('e_titulo').focus(); $('e_titulo').scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+  mes: ({ v }) => {
+    const [y, m] = S.mes.split('-').map(Number);
+    S.mes = new Date(y, m - 1 + Number(v), 1).toLocaleDateString('en-CA').slice(0, 7); render();
+  },
+
+  enviarWa: () => accion(async () => {
+    const err = puedeEnviar(); if (err) { $('s_err').textContent = err; return; }
+    const lista = destinatarios('wa');
+    if (!lista.length) { $('s_err').textContent = 'No hay contactos con teléfono y permiso en ese sector.'; return; }
+    await guardarCambio();
+    S.cola = { lista, i: 0, enviados: 0 }; render();
+  }),
+  waAbrir: () => {
+    const q = S.cola, c = q.lista[q.i];
+    window.open(urlWa(c.telefono, armar(S.draft.mensaje, c)), '_blank');
+    q.enviados++; A.waSaltar();
+  },
+  // Igual que el correo: la imagen del aviso + el mensaje. En el teléfono va todo junto por Compartir;
+  // en el computador la imagen se baja una vez y se arrastra a cada chat.
+  waImagen: () => accion(async () => {
+    const q = S.cola, c = q.lista[q.i], texto = armar(S.draft.mensaje, c);
+    q.imagen = q.imagen || await flyerBlob();
+    const archivo = new File([q.imagen], `aviso-${S.draft.tipo}-${nombreArchivo(S.draft.lugar)}.png`, { type: 'image/png' });
+    if (navigator.canShare?.({ files: [archivo] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      try { await navigator.share({ files: [archivo], text: texto }); } catch (e) { if (e.name === 'AbortError') return; throw e; }
+    } else {
+      // Se copia en cada contacto, por si entre uno y otro se copió otra cosa.
+      const copiada = await copiarImagen(q.imagen, archivo.name);
+      if (!q.avisado) { q.avisado = true; alert(copiada ? 'La imagen del aviso quedó COPIADA.\n\nEn cada chat que se abra: haz clic en el chat, presiona Ctrl + V para pegar la imagen y envía; luego envía el mensaje.' : 'Se bajó la imagen del aviso (carpeta Descargas). En cada chat que se abra, arrástrala y envía junto con el mensaje.'); }
+      window.open(urlWa(c.telefono, texto), '_blank');
+    }
+    q.enviados++; A.waSaltar();
+  }),
+  waSaltar: () => { const q = S.cola; q.i++; if (q.i >= q.lista.length) A.waTerminar(); else render(); },
+  waTerminar: () => accion(async () => {
+    const n = S.cola.enviados; S.cola = null;
+    if (n) await registrarEnvio('wa', n);
+    render(); if ($('s_ok')) $('s_ok').textContent = `Listo: ${n} WhatsApp enviados.`;
+  }),
+  enviarCorreo: () => accion(async () => {
+    const err = puedeEnviar(); if (err) { $('s_err').textContent = err; return; }
+    const lista = destinatarios('mail');
+    if (!lista.length) { $('s_err').textContent = 'No hay contactos con correo y permiso en ese sector.'; return; }
+    if (!confirm(`¿Enviar el correo a ${lista.length} personas?`)) return;
+    $('s_err').textContent = ''; $('s_ok').textContent = 'Enviando…';
+    await guardarCambio();
+    if (!DEMO) await llamarFuncion(CFG.FUNCIONES.correo, {
+      mensajes: lista.map(c => ({ email: c.correo, nombre: c.nombre, asunto: armar(S.draft.asunto, c), texto: armar(S.draft.mensaje, c), html: correoActividadHtml(c) }))
+    });
+    await registrarEnvio('mail', lista.length);
+    $('s_ok').textContent = `Listo: correo enviado a ${lista.length} personas${DEMO ? ' (modo prueba, no salió de verdad)' : ''}.`;
+  }),
+
+  guardarEquipo: () => accion(async () => {
+    const nombre = $('q_nombre').value.trim(), correo = $('q_correo').value.trim();
+    if (!nombre) { $('q_err').textContent = 'Escribe el nombre.'; return; }
+    if (correo && !/^\S+@\S+\.\S+$/.test(correo)) { $('q_err').textContent = 'Revisa el correo.'; return; }
+    const row = { nombre, apellido: $('q_apellido').value.trim(), correo, telefono: $('q_tel').value.trim(), cargo: $('q_cargo').value.trim(), funciones: $('q_funciones').value.trim() };
+    if (S.editEquipo) await db.update('equipo', S.editEquipo, row); else await db.insert('equipo', row);
+    S.editEquipo = null; S.equipo = await db.list('equipo'); render();
+  }),
+  editarEquipo: ({ v }) => { S.editEquipo = v; render(); scrollTo(0, 0); },
+  cancelarEquipo: () => { S.editEquipo = null; render(); },
+  bienvenida: ({ v }) => accion(async () => {
+    const m = S.equipo.find(x => x.id === v);
+    if (!confirm(`¿Enviar el correo de bienvenida a ${nombreCompleto(m)} (${m.correo})?`)) return;
+    const msj = { email: m.correo, nombre: nombreCompleto(m), asunto: armarEquipo(S.bienvenida.asunto, m), texto: armarEquipo(S.bienvenida.texto, m), html: correoBienvenidaHtml(m) };
+    const ej = CFG.EMAILJS || {};
+    if (DEMO) {}
+    else if (ej.publicKey && ej.serviceId && ej.templateBienvenida) {
+      // Bienvenida por EmailJS (Gmail de Héctor).
+      try {
+        await emailjs.send(ej.serviceId, ej.templateBienvenida,
+          { to_email: msj.email, to_name: msj.nombre, asunto: msj.asunto, contenido_html: msj.html, texto: msj.texto }, { publicKey: ej.publicKey });
+      } catch (e) { throw new Error('EmailJS: ' + (e?.text || e?.message || e)); }
+    } else await llamarFuncion(CFG.FUNCIONES.correo, { mensajes: [msj] });
+    await db.update('equipo', v, { bienvenida_en: new Date().toISOString() });
+    S.equipo = await db.list('equipo'); render();
+    alert(`Bienvenida enviada a ${m.correo}${DEMO ? ' (modo prueba, no salió de verdad)' : ''}.`);
+  }),
+
+  // Bienvenida por WhatsApp, igual de bonita que el correo: la imagen con el diseño + el mensaje (WhatsApp usa *texto* para negrita).
+  // En el teléfono abre Compartir con imagen y texto juntos; en el computador baja la imagen y abre el chat con el texto listo.
+  bienvenidaWa: ({ v }) => accion(async () => {
+    const m = S.equipo.find(x => x.id === v);
+    const funciones = String(m.funciones || '').split(/\n|;/).map(f => f.trim()).filter(Boolean);
+    const texto = '*EQUIPO HÉCTOR GARCÍA · SE SIENTEN PASOS*\n\n'
+      + armarEquipo(S.bienvenida.texto, m).replace(/\*\*(.+?)\*\*/g, '*$1*')
+      // Sin emojis: solo puntos y guiones, que se ven igual en cualquier WhatsApp.
+      + `\n\n• *Tu cargo:* ${m.cargo || 'Integrante del equipo'}` + (funciones.length ? `\n• *Tus funciones:*\n${funciones.map(f => '   - ' + f).join('\n')}` : '')
+      + '\n\n*¡Vamos con todo por Páez!*\n_Cuenta conmigo, cuento contigo._\n\nHéctor García';
+    const imagen = await correoAImagen(correoBienvenidaHtml(m));
+    const archivo = new File([imagen], `bienvenida-${nombreArchivo(nombreCompleto(m))}.png`, { type: 'image/png' });
+    if (navigator.canShare?.({ files: [archivo] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      try { await navigator.share({ files: [archivo], text: texto }); } catch (e) { if (e.name !== 'AbortError') throw e; }
+      return;
+    }
+    const copiada = await copiarImagen(imagen, archivo.name);
+    alert((copiada ? 'La imagen de la bienvenida quedó COPIADA.' : 'Se bajó la imagen de la bienvenida (carpeta Descargas).')
+      + (telWa(m.telefono) ? `\n\nAhora se abre el chat de WhatsApp con el mensaje:\n1. ${copiada ? 'Haz clic en el chat y presiona Ctrl + V para pegar la imagen' : 'Arrastra la imagen al chat'}.\n2. Envía la imagen y luego el mensaje.` : '\n\nEsta persona no tiene teléfono: mándala por WhatsApp desde tu teléfono.'));
+    if (telWa(m.telefono)) window.open(urlWa(m.telefono, texto), '_blank');
+  }),
+
+  guardarNodo: () => accion(async () => {
+    const cargo = $('o_cargo').value.trim();
+    if (!cargo) { $('o_err').textContent = 'Escribe el cargo.'; return; }
+    const row = { cargo, nombre: $('o_nombre').value.trim(), apellido: $('o_apellido').value.trim(), padre: $('o_padre').value || null };
+    if (S.editNodo && S.editNodo !== 'nuevo') await db.update('organigrama', S.editNodo, row); else await db.insert('organigrama', row);
+    S.editNodo = null; S.padreNuevo = null; S.organigrama = await db.list('organigrama'); render();
+  }),
+  editarNodo: ({ v }) => { S.editNodo = v; S.padreNuevo = null; render(); scrollTo(0, 0); },
+  hijoNodo: ({ v }) => { S.editNodo = null; S.padreNuevo = v; render(); scrollTo(0, 0); $('o_cargo').focus(); },
+  cancelarNodo: () => { S.editNodo = null; S.padreNuevo = null; render(); },
+  // Al borrar un cargo, los que dependían de él pasan a reportar a su jefe.
+  borrarNodo: ({ v }) => accion(async () => {
+    const n = S.organigrama.find(x => x.id === v);
+    if (!confirm(`¿Borrar "${n.cargo}" del organigrama?`)) return;
+    for (const hijo of hijosDe(v)) await db.update('organigrama', hijo.id, { padre: n.padre || null });
+    await db.remove('organigrama', v);
+    if (S.editNodo === v) S.editNodo = null;
+    S.organigrama = await db.list('organigrama'); render();
+  }),
+  pdfOrganigrama: () => pdfOrganigrama(),
+  guardarAliado: () => accion(async () => {
+    const nombre = $('a_nombre').value.trim(), correo = $('a_correo').value.trim();
+    if (!nombre) { $('a_err').textContent = 'Escribe el nombre.'; return; }
+    if (correo && !/^\S+@\S+\.\S+$/.test(correo)) { $('a_err').textContent = 'Revisa el correo.'; return; }
+    const row = { nombre, apellido: $('a_apellido').value.trim(), correo, cargo: $('a_cargo').value.trim(), partido: $('a_partido').value.trim() };
+    if (S.editAliado) await db.update('aliados', S.editAliado, row); else await db.insert('aliados', row);
+    S.editAliado = null; S.aliados = await db.list('aliados'); render();
+  }),
+  editarAliado: ({ v }) => { S.editAliado = v; render(); },
+  cancelarAliado: () => { S.editAliado = null; render(); },
+
+  guardarDonacion: () => accion(async () => {
+    const donante = $('d_nombre').value.trim(), monto = Number($('d_monto').value || 0), metodo = $('d_metodo').value;
+    if (!donante) { $('d_err').textContent = 'Escribe el nombre del donante.'; return; }
+    if (metodo !== 'En especie' && !(monto > 0)) { $('d_err').textContent = 'Escribe un monto mayor a cero.'; return; }
+    let comprobante = null;
+    const f = $('d_comp')?.files[0];
+    if (f) {
+      comprobante = `${Date.now()}-${f.name.replace(/[^\w.-]/g, '_')}`;
+      const { error } = await sb.storage.from('comprobantes').upload(comprobante, f);
+      if (error) throw error;
+    }
+    await db.insert('donaciones', { donante, fecha: $('d_fecha').value || hoyISO(), monto, moneda: $('d_moneda').value, metodo, nota: $('d_nota').value.trim(), comprobante });
+    S.donaciones = await db.list('donaciones'); render();
+  }),
+  verComprobante: ({ v }) => accion(async () => {
+    const { data, error } = await sb.storage.from('comprobantes').createSignedUrl(v, 300);
+    if (error) throw error; window.open(data.signedUrl, '_blank');
+  }),
+  exportarDonaciones: () => exportar(S.donaciones.map(d => ({ fecha: d.fecha, donante: d.donante, monto: d.monto, moneda: d.moneda, forma: d.metodo, nota: d.nota })), 'donaciones'),
+
+  crearUsuario: () => accion(async () => {
+    const user = $('u_user').value.trim(), password = $('u_pass').value;
+    if (!user) { $('u_err').textContent = 'Escribe el usuario.'; return; }
+    if (!user.includes('@') && !/^[a-z0-9._-]+$/i.test(user)) { $('u_err').textContent = 'El usuario solo puede tener letras sin tilde, números, punto o guion.'; return; }
+    if (password.length < 6) { $('u_err').textContent = 'La clave debe tener al menos 6 caracteres.'; return; }
+    await apiUsuarios({ accion: 'crear', email: correoDe(user), password });
+    S.usuarios = (await apiUsuarios({ accion: 'listar' })).usuarios; render();
+    alert(`Usuario creado. Entrégale:\nUsuario: ${usuarioCorto(correoDe(user))}\nClave: ${password}`);
+  }),
+  claveUsuario: ({ v }) => accion(async () => {
+    const u = S.usuarios.find(x => x.id === v);
+    const password = prompt(`Nueva clave para ${usuarioCorto(u.email)} (mínimo 6):`);
+    if (password === null) return;
+    if (password.length < 6) { alert('La clave debe tener al menos 6 caracteres.'); return; }
+    await apiUsuarios({ accion: 'clave', id: v, password });
+    alert('Clave cambiada.');
+  }),
+  borrarUsuario: ({ v }) => accion(async () => {
+    const u = S.usuarios.find(x => x.id === v);
+    if (!confirm(`¿Borrar a ${usuarioCorto(u.email)}? Ya no podrá entrar al panel.`)) return;
+    await apiUsuarios({ accion: 'borrar', id: v });
+    S.usuarios = (await apiUsuarios({ accion: 'listar' })).usuarios; render();
+  }),
+
+  borrar: ({ t, v }) => accion(async () => {
+    if (!confirm('¿Borrar este registro?')) return;
+    await db.remove(t, v); S[t] = await db.list(t); render();
+  })
+};
+
+// Prepara el aviso con los datos del evento. Con "tipo" cambia también el mensaje y el asunto al de ese tipo.
+function usarEvento(id, tipo) {
+  const e = S.eventos.find(x => x.id === id);
+  if (!e) return;
+  Object.assign(S.draft, { evento: id, lugar: e.lugar, hora: e.hora || '', sector: e.sector || '', horaAntes: e.hora || '', lugarAntes: e.lugar,
+    fecha: e.fecha === hoyISO() ? 'hoy' : e.fecha === diaISO(1) ? 'mañana' : e.fecha === diaISO(-1) ? 'ayer' : 'el ' + fechaBonita(e.fecha) });
+  if (tipo) usarTipo(tipo);
+}
+function usarTipo(tipo) {
+  const t = TIPOS_AVISO[tipo];
+  Object.assign(S.draft, { tipo, mensaje: t.mensaje, asunto: t.asunto, motivo: '' });
+  if (tipo !== 'cambio') Object.assign(S.draft, { hora: S.draft.horaAntes || S.draft.hora, lugar: S.draft.lugarAntes || S.draft.lugar });
+}
+
+// Convierte un correo con diseño en imagen PNG (para mandar por WhatsApp). Los botones no se pueden tocar en una imagen: se quitan.
+async function correoAImagen(html) {
+  const caja = document.createElement('div');
+  caja.style.cssText = 'position:fixed;left:-10000px;top:0;width:600px;';
+  try {
+    caja.innerHTML = html;
+    caja.querySelector('[data-botones]')?.remove();
+    document.body.appendChild(caja);
+    const pieza = caja.querySelector('table table');
+    pieza.style.borderRadius = '0';
+    await Promise.all([...caja.querySelectorAll('img')].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+    const lienzo = await html2canvas(pieza, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    return await new Promise(r => lienzo.toBlob(r, 'image/png'));
+  } finally { caja.remove(); }
+}
+
+// Descarga la imagen o, si se pide y el teléfono lo permite, abre "Compartir" (WhatsApp, etc.).
+async function bajarOCompartir(blob, nombre, texto, compartir) {
+  const archivo = new File([blob], nombre, { type: 'image/png' });
+  if (compartir && navigator.canShare?.({ files: [archivo] })) {
+    try { await navigator.share({ files: [archivo], text: texto }); } catch (e) { if (e.name !== 'AbortError') throw e; }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+// Copia la imagen al portapapeles (para pegarla con Ctrl+V en WhatsApp Web). Si el navegador no deja, la baja.
+async function copiarImagen(blob, nombre) {
+  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); return true; }
+  catch { await bajarOCompartir(blob, nombre, '', false); return false; }
+}
+const nombreArchivo = s => String(s || 'paez').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
+
+// El aviso como imagen (flyer) para mandar por WhatsApp: el mismo diseño del correo, sin el nombre de una persona.
+async function flyerBlob() {
+  const d = S.draft, mensaje = d.mensaje;
+  const sinNombre = armar(mensaje.replace(/^\s*Hola\s*\{nombre\}\s*[,:]?\s*/i, ''), { nombre: '' });
+  d.mensaje = sinNombre.charAt(0).toUpperCase() + sinNombre.slice(1);
+  try { return await correoAImagen(correoActividadHtml({ nombre: '' })); }
+  finally { d.mensaje = mensaje; }
+}
+
+// Al avisar un cambio, la Agenda queda con la nueva hora y el nuevo lugar.
+async function guardarCambio() {
+  const d = S.draft, e = S.eventos.find(x => x.id === d.evento);
+  if (d.tipo !== 'cambio' || !e || (e.hora === d.hora && e.lugar === d.lugar)) return;
+  await db.update('eventos', e.id, { hora: d.hora, lugar: d.lugar });
+  S.eventos = await db.list('eventos');
+}
+
+function exportar(filas, nombre) {
+  if (!filas.length) { alert('No hay datos para exportar.'); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), nombre);
+  XLSX.writeFile(wb, `${nombre}-${hoyISO()}.xlsx`);
+}
+
+async function importarArchivo(file) {
+  const wb = XLSX.read(await file.arrayBuffer());
+  const filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+  const clave = (r, ...ks) => { for (const k of Object.keys(r)) { const n = k.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); if (ks.includes(n)) return String(r[k]).trim(); } return null; };
+  const tieneAcepta = filas.some(r => clave(r, 'acepta', 'permiso') !== null);
+  if (!tieneAcepta && !confirm('El archivo no tiene columna "acepta". ¿Todas estas personas aceptaron recibir mensajes?')) return;
+  const yaTel = new Set(S.contactos.map(c => telWa(c.telefono)).filter(Boolean));
+  const nuevos = [];
+  for (const r of filas) {
+    const nombre = clave(r, 'nombre', 'nombres', 'nombre completo');
+    if (!nombre) continue;
+    const telefono = clave(r, 'telefono', 'celular', 'tlf', 'movil', 'whatsapp') || '';
+    if (telefono && yaTel.has(telWa(telefono))) continue;
+    yaTel.add(telWa(telefono));
+    const a = (clave(r, 'acepta', 'permiso') || '').toLowerCase();
+    nuevos.push({ nombre, telefono, correo: clave(r, 'correo', 'email', 'e-mail', 'mail') || '',
+      sector: clave(r, 'sector', 'parroquia', 'barrio') || CFG.SECTORES[0],
+      acepta: tieneAcepta ? ['si', 'sí', 'x', 'true', '1', 'yes'].includes(a) : true });
+  }
+  if (!nuevos.length) { alert('No encontré contactos nuevos (revisa que haya una columna "nombre").'); return; }
+  for (let i = 0; i < nuevos.length; i += 500) await db.insert('contactos', nuevos.slice(i, i + 500));
+  S.contactos = await db.list('contactos'); render();
+  alert(`Importados ${nuevos.length} contactos.`);
+}
+
+// ---------- Eventos de la página ----------
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (b && A[b.dataset.a]) A[b.dataset.a](b.dataset);
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.f) {
+    S.draft[t.dataset.f] = t.type === 'checkbox' ? t.checked : t.value;
+    if (t.dataset.f === 'evento' && t.value) { usarEvento(t.value); render(); return; }
+    if ($('s_err')) $('s_err').textContent = '';
+    actualizarPrevia();
+  }
+  if (t.id === 'dest_buscar') {
+    const q = t.value.trim().toLowerCase();
+    document.querySelectorAll('[data-fila-dest]').forEach(l => { l.style.display = !q || l.dataset.filaDest.includes(q) ? '' : 'none'; });
+  }
+  if (t.dataset.b) { S.bienvenida[t.dataset.b] = t.value; try { localStorage.setItem('cp_bienvenida', JSON.stringify(S.bienvenida)); } catch {} previaBienvenida(); }
+  if (t.id === 'buscar') { S.buscar = t.value; render(); const i = $('buscar'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  if (/^[a-z]_/.test(t.id || '')) { const p = t.id[0]; if ($(p + '_err')) $(p + '_err').textContent = ''; }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'filtroSector') { S.filtroSector = t.value; render(); }
+  if (t.dataset.dest) {
+    const d = S.draft, id = t.dataset.dest;
+    d.elegidos = t.checked ? [...new Set([...d.elegidos, id])] : d.elegidos.filter(x => x !== id);
+    $('nElegidos').textContent = d.elegidos.length; actualizarPrevia();
+  }
+  if (t.id === 'electoral') { S.electoral = t.checked; try { localStorage.setItem('cp_electoral', t.checked ? '1' : '0'); } catch {} render(); }
+  if (t.id === 'archivo' && t.files[0]) accion(() => importarArchivo(t.files[0]));
+});
+
+// ---------- Inicio de sesión ----------
+const heroAcceso = () => `
+    <section class="acc-hero">
+      <div class="acc-glow"></div>
+      <img class="acc-logo" src="logo/logo.svg" alt="">
+      <h1>${h(CFG.TITULO)}</h1>
+      <div class="acc-raya"></div>
+      <p class="acc-sub">${h(CFG.SUBTITULO)}</p>
+      <div class="acc-lema"><i class="ti ti-flame"></i> Se sienten pasos</div>
+      <ul class="acc-lista">
+        <li><i class="ti ti-users-group"></i><span><b>Equipo y contactos</b>Toda la red de la campaña en un solo lugar.</span></li>
+      </ul>
+    </section>`;
+const ojoClave = (input, boton) => {
+  $(boton).onclick = () => {
+    const p = $(input), ver = p.type === 'password';
+    p.type = ver ? 'text' : 'password';
+    $(boton).innerHTML = `<i class="ti ti-eye${ver ? '-off' : ''}"></i>`;
+  };
+};
+
+function vLogin(msg = '', usuario = '') {
+  $('app').innerHTML = `<div class="acceso">${heroAcceso()}
+    <section class="acc-form">
+      <form class="acc-caja" id="l_form" autocomplete="on">
+        <img class="acc-logo-mob" src="logo/logo.svg" alt="">
+        <div class="acc-lema-mob">Se sienten pasos</div>
+        <div class="acc-chip"><i class="ti ti-shield-lock"></i> Acceso privado del equipo</div>
+        <h2>Bienvenido</h2>
+        <p class="acc-ayuda">Entra con tu usuario y clave.</p>
+        <label class="f" for="l_mail">Usuario</label>
+        <div class="acc-campo"><i class="ti ti-user"></i><input id="l_mail" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Tu usuario" value="${h(usuario)}"></div>
+        <label class="f" for="l_pass">Clave</label>
+        <div class="acc-campo"><i class="ti ti-lock"></i><input id="l_pass" type="password" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="acc-ojo" id="l_ojo" aria-label="Mostrar clave"><i class="ti ti-eye"></i></button></div>
+        ${msg ? `<div class="acc-err"><i class="ti ti-alert-circle"></i> ${h(msg)}</div>` : ''}
+        <button class="pri acc-btn" id="l_btn" type="submit">Entrar <i class="ti ti-arrow-right"></i></button>
+        <p class="acc-pie">¿Olvidaste tu clave? Pídesela al administrador.</p>
+      </form>
+    </section></div>`;
+  $(usuario ? 'l_pass' : 'l_mail').focus();
+  ojoClave('l_pass', 'l_ojo');
+  $('l_form').onsubmit = async e => {
+    e.preventDefault();
+    const btn = $('l_btn'), user = $('l_mail').value.trim();
+    btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2 acc-gira"></i> Entrando…';
+    const { error } = await sb.auth.signInWithPassword({ email: correoDe(user), password: $('l_pass').value });
+    if (error) vLogin('Usuario o clave incorrectos.', user); else iniciar();
+  };
+}
+
+async function iniciar() {
+  if (!DEMO) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return vLogin();
+    S.admin = esAdminCorreo(session.user.email);
+    S.soloAgenda = esSoloAgenda(session.user.email);
+    document.body.classList.toggle('solo-agenda', S.soloAgenda);
+    S.gestor = session.user.email?.toLowerCase() === CFG.GESTOR_USUARIOS.toLowerCase();
+  }
+  try { await cargar(); } catch (e) { console.error(e); alert('No se pudieron cargar los datos: ' + e.message); }
+  render();
+}
+document.addEventListener('DOMContentLoaded', iniciar);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+<script src="elecciones.js?v=5"></script>
+</body>
+</html>
